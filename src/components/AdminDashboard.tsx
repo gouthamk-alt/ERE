@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Plus,
   Search,
@@ -12,6 +12,7 @@ import {
   Inbox,
   ArrowUpRight,
   Star,
+  FileText,
 } from 'lucide-react';
 import {
   PropertyListing,
@@ -19,6 +20,7 @@ import {
   ListingStatus,
   TeamMember,
   ClientEnquiry,
+  BlogPost,
   BRAND_ASSETS,
 } from '../data/initialData';
 import { PropertyImage } from './PropertyImage';
@@ -27,11 +29,13 @@ interface AdminDashboardProps {
   listings: PropertyListing[];
   teamMembers: TeamMember[];
   enquiries: ClientEnquiry[];
-  initialEditingProperty: PropertyListing | null;
-  onClearInitialEditing: () => void;
+  blogPosts: BlogPost[];
   onAddListing: (listing: PropertyListing) => void;
   onUpdateListing: (listing: PropertyListing) => void;
   onDeleteListing: (id: string) => void;
+  onAddBlogPost: (post: BlogPost) => void;
+  onUpdateBlogPost: (post: BlogPost) => void;
+  onDeleteBlogPost: (id: string) => void;
   onUpdateEnquiryStatus: (id: string, status: ClientEnquiry['status']) => void;
   onResetDemoData: () => void;
   onPreviewProperty: (property: PropertyListing) => void;
@@ -56,12 +60,12 @@ const PRESET_IMAGES = [
     url: 'https://images.zenu.com.au/d5b1ykdixa3hlcejc5m79vlmgwnpy4pg.png',
   },
   {
-    label: 'C/344 Coode St, Dianella',
-    url: 'https://images.zenu.com.au/600-min/osjwog8lnmhx1v2gmlu21ehj9tqttr2d.jpg',
+    label: 'Perth Market Report Cover',
+    url: '/assets/blog-may-2026.jpg',
   },
 ];
 
-const EMPTY_FORM: Omit<PropertyListing, 'id'> = {
+const EMPTY_LISTING_FORM: Omit<PropertyListing, 'id'> = {
   title: '',
   address: '',
   suburb: 'Applecross',
@@ -93,35 +97,52 @@ const EMPTY_FORM: Omit<PropertyListing, 'id'> = {
   listedDate: new Date().toISOString().split('T')[0],
 };
 
+const EMPTY_BLOG_FORM: Omit<BlogPost, 'id'> = {
+  title: '',
+  date: 'October 2026',
+  category: 'Market Update',
+  author: 'Wendy Chia & Calvin Liew',
+  imageUrl: '/assets/blog-may-2026.jpg',
+  excerpt: '',
+  content: [''],
+  featured: false,
+};
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   listings,
   teamMembers,
   enquiries,
-  initialEditingProperty,
-  onClearInitialEditing,
+  blogPosts,
   onAddListing,
   onUpdateListing,
   onDeleteListing,
+  onAddBlogPost,
+  onUpdateBlogPost,
+  onDeleteBlogPost,
   onUpdateEnquiryStatus,
   onResetDemoData,
   onPreviewProperty,
   onExitAdmin,
 }) => {
-  const [activeSection, setActiveSection] = useState<'inventory' | 'editor' | 'enquiries' | 'agents'>('inventory');
+  const [activeSection, setActiveSection] = useState<
+    'inventory' | 'editor' | 'blogs' | 'blog-editor' | 'enquiries' | 'agents'
+  >('inventory');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formState, setFormState] = useState<Omit<PropertyListing, 'id'>>(EMPTY_FORM);
-  const [featuresText, setFeaturesText] = useState(EMPTY_FORM.features.join('\n'));
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (initialEditingProperty) {
-      startEditProperty(initialEditingProperty);
-      onClearInitialEditing();
-    }
-  }, [initialEditingProperty]);
+  // Listing Editor State
+  const [editingListingId, setEditingListingId] = useState<string | null>(null);
+  const [listingForm, setListingForm] = useState<Omit<PropertyListing, 'id'>>(EMPTY_LISTING_FORM);
+  const [featuresText, setFeaturesText] = useState(EMPTY_LISTING_FORM.features.join('\n'));
+  const [confirmDeleteListingId, setConfirmDeleteListingId] = useState<string | null>(null);
+
+  // Blog Editor State
+  const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
+  const [blogForm, setBlogForm] = useState<Omit<BlogPost, 'id'>>(EMPTY_BLOG_FORM);
+  const [blogContentText, setBlogContentText] = useState('');
+  const [confirmDeleteBlogId, setConfirmDeleteBlogId] = useState<string | null>(null);
+
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -130,24 +151,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }, 3500);
   };
 
-  const startCreateNew = () => {
-    setEditingId(null);
-    setFormState(EMPTY_FORM);
-    setFeaturesText(EMPTY_FORM.features.join('\n'));
+  // Listing CRUD handlers
+  const startCreateNewListing = () => {
+    setEditingListingId(null);
+    setListingForm(EMPTY_LISTING_FORM);
+    setFeaturesText(EMPTY_LISTING_FORM.features.join('\n'));
     setActiveSection('editor');
   };
 
-  const startEditProperty = (prop: PropertyListing) => {
-    setEditingId(prop.id);
+  const startEditListing = (prop: PropertyListing) => {
+    setEditingListingId(prop.id);
     const { id, ...rest } = prop;
-    setFormState(rest);
+    setListingForm(rest);
     setFeaturesText(prop.features.join('\n'));
     setActiveSection('editor');
   };
 
-  const handleSaveProperty = (e: React.FormEvent) => {
+  const handleSaveListing = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formState.title.trim() || !formState.address.trim() || !formState.priceDisplay.trim()) {
+    if (!listingForm.title.trim() || !listingForm.address.trim() || !listingForm.priceDisplay.trim()) {
       showToast('Please complete Street Title, Full Address, and Price Display.');
       return;
     }
@@ -157,10 +179,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       .map((line) => line.trim())
       .filter(Boolean);
 
-    if (editingId) {
+    if (editingListingId) {
       const updated: PropertyListing = {
-        id: editingId,
-        ...formState,
+        id: editingListingId,
+        ...listingForm,
         features: parsedFeatures.length > 0 ? parsedFeatures : ['Prime Western Australian property'],
       };
       onUpdateListing(updated);
@@ -168,7 +190,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     } else {
       const newListing: PropertyListing = {
         id: `${Date.now().toString().slice(-7)}`,
-        ...formState,
+        ...listingForm,
         features: parsedFeatures.length > 0 ? parsedFeatures : ['Prime Western Australian property'],
       };
       onAddListing(newListing);
@@ -199,9 +221,57 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     });
     showToast(
       !prop.featured
-        ? `${prop.title} added to Current Listings carousel`
-        : `${prop.title} removed from featured highlight`
+        ? `${prop.title} marked as Featured`
+        : `${prop.title} removed from Featured`
     );
+  };
+
+  // Blog CRUD handlers
+  const startCreateNewBlog = () => {
+    setEditingBlogId(null);
+    setBlogForm(EMPTY_BLOG_FORM);
+    setBlogContentText('');
+    setActiveSection('blog-editor');
+  };
+
+  const startEditBlog = (post: BlogPost) => {
+    setEditingBlogId(post.id);
+    const { id, ...rest } = post;
+    setBlogForm(rest);
+    setBlogContentText(post.content.join('\n\n'));
+    setActiveSection('blog-editor');
+  };
+
+  const handleSaveBlog = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!blogForm.title.trim() || !blogForm.excerpt.trim()) {
+      showToast('Please provide a Blog Title and Summary Excerpt.');
+      return;
+    }
+
+    const paragraphs = blogContentText
+      .split(/\n\s*\n/)
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    if (editingBlogId) {
+      const updatedPost: BlogPost = {
+        id: editingBlogId,
+        ...blogForm,
+        content: paragraphs.length > 0 ? paragraphs : [blogForm.excerpt],
+      };
+      onUpdateBlogPost(updatedPost);
+      showToast(`Updated blog article: ${updatedPost.title}`);
+    } else {
+      const newPost: BlogPost = {
+        id: `blog-${Date.now().toString().slice(-5)}`,
+        ...blogForm,
+        content: paragraphs.length > 0 ? paragraphs : [blogForm.excerpt],
+      };
+      onAddBlogPost(newPost);
+      showToast(`Published new blog article: ${newPost.title}`);
+    }
+    setActiveSection('blogs');
   };
 
   const filteredListings = listings.filter((item) => {
@@ -219,7 +289,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const activeLeaseCount = listings.filter(
     (l) => l.category === 'Residential Lease' || l.category === 'Commercial'
   ).length;
-  const soldPortfolioCount = listings.filter((l) => l.category === 'Sold').length;
   const unreadEnquiriesCount = enquiries.filter((e) => e.status === 'New').length;
 
   return (
@@ -251,14 +320,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             >
               <span className="flex items-center gap-2.5">
                 <Building2 className="w-4 h-4" />
-                Current Listings
+                Property Listings
               </span>
               <span className="tabular-nums">{listings.length}</span>
             </button>
 
             <button
               type="button"
-              onClick={startCreateNew}
+              onClick={startCreateNewListing}
               className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-inter rounded-full border transition-colors cursor-pointer ${
                 activeSection === 'editor'
                   ? 'bg-white text-black border-white font-medium'
@@ -267,8 +336,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             >
               <span className="flex items-center gap-2.5">
                 <Plus className="w-4 h-4" />
-                {editingId ? 'Edit Listing' : 'Add New Listing'}
+                {editingListingId ? 'Edit Listing' : 'Add New Listing'}
               </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveSection('blogs')}
+              className={`w-full flex items-center justify-between px-4 py-2.5 text-xs font-inter rounded-full border transition-colors cursor-pointer ${
+                activeSection === 'blogs' || activeSection === 'blog-editor'
+                  ? 'bg-white text-black border-white font-medium'
+                  : 'text-white/80 border-transparent hover:border-white/40 hover:text-white'
+              }`}
+            >
+              <span className="flex items-center gap-2.5">
+                <FileText className="w-4 h-4" />
+                Blog & News Articles
+              </span>
+              <span className="tabular-nums">{blogPosts.length}</span>
             </button>
 
             <button
@@ -312,12 +397,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             type="button"
             onClick={() => {
               onResetDemoData();
-              showToast('Restored original website listings.');
+              showToast('Restored original website listings & blog posts.');
             }}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-inter text-white/80 hover:text-white border border-white/30 rounded-full hover:border-white transition-colors cursor-pointer whitespace-nowrap"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            Reset Original Listings
+            Reset Default Data
           </button>
 
           <button
@@ -341,7 +426,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <span className="font-medium text-white">
               {activeSection === 'inventory' && 'Property Listings Management'}
               {activeSection === 'editor' &&
-                (editingId ? `Editing: ${formState.title}` : 'Add New Property Listing')}
+                (editingListingId ? `Editing Listing: ${listingForm.title}` : 'Add New Property Listing')}
+              {activeSection === 'blogs' && 'Blog & News Management'}
+              {activeSection === 'blog-editor' &&
+                (editingBlogId ? `Editing Article: ${blogForm.title}` : 'Create New Blog Article')}
               {activeSection === 'enquiries' && 'Submitted Appraisals & Enquiries'}
               {activeSection === 'agents' && 'Team Directory'}
             </span>
@@ -356,11 +444,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             )}
             <button
               type="button"
-              onClick={startCreateNew}
+              onClick={startCreateNewListing}
               className="zenu-button-outline-light gap-1.5 text-xs"
             >
               <Plus className="w-3.5 h-3.5" />
               Add Listing
+            </button>
+            <button
+              type="button"
+              onClick={startCreateNewBlog}
+              className="zenu-button gap-1.5 text-xs"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Blog Post
             </button>
           </div>
         </header>
@@ -380,9 +476,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </p>
           </div>
           <div className="px-6 py-4">
-            <p className="text-xs text-white/60">Sold Listings</p>
+            <p className="text-xs text-white/60">Published Blog Articles</p>
             <p className="text-2xl font-cormorant text-white tabular-nums mt-1">
-              {soldPortfolioCount}
+              {blogPosts.length}
             </p>
           </div>
           <div className="px-6 py-4">
@@ -395,10 +491,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {/* Main Viewport Body */}
         <main className="p-6 sm:p-8 flex-1">
-          {/* SECTION 1: INVENTORY TABLE */}
+          {/* =============================================================== */}
+          {/* SECTION 1: PROPERTY INVENTORY TABLE                             */}
+          {/* =============================================================== */}
           {activeSection === 'inventory' && (
             <div className="space-y-6 max-w-[1200px] mx-auto">
-              {/* Filter & Search Bar */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#000000] p-4 border border-[#c6c6c6]/30">
                 <div className="flex flex-wrap items-center gap-2">
                   {(['ALL', 'Residential Sale', 'Residential Lease', 'Commercial', 'Sold'] as const).map(
@@ -431,7 +528,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              {/* Data Grid */}
               <div className="bg-[#000000] border border-[#c6c6c6]/30 overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -442,7 +538,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <th className="py-3.5 px-4 text-right">Price Guide</th>
                       <th className="py-3.5 px-4">Badge</th>
                       <th className="py-3.5 px-4">Lead Agent</th>
-                      <th className="py-3.5 px-4 text-center">Carousel</th>
+                      <th className="py-3.5 px-4 text-center">Featured</th>
                       <th className="py-3.5 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -515,7 +611,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <button
                               type="button"
                               onClick={() => handleToggleFeatured(prop)}
-                              title="Toggle homepage carousel highlight"
+                              title="Toggle homepage highlight"
                               className={`p-1.5 transition-colors cursor-pointer ${
                                 prop.featured
                                   ? 'text-white'
@@ -529,13 +625,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             </button>
                           </td>
                           <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                            {confirmDeleteId === prop.id ? (
+                            {confirmDeleteListingId === prop.id ? (
                               <div className="inline-flex items-center gap-1.5">
                                 <button
                                   type="button"
                                   onClick={() => {
                                     onDeleteListing(prop.id);
-                                    setConfirmDeleteId(null);
+                                    setConfirmDeleteListingId(null);
                                     showToast(`Deleted listing ${prop.title}`);
                                   }}
                                   className="px-2.5 py-1 bg-red-600 text-white text-[11px] rounded-full cursor-pointer"
@@ -544,7 +640,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => setConfirmDeleteId(null)}
+                                  onClick={() => setConfirmDeleteListingId(null)}
                                   className="px-2.5 py-1 bg-[#302f2f] text-white text-[11px] rounded-full cursor-pointer"
                                 >
                                   Cancel
@@ -554,7 +650,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               <div className="inline-flex items-center gap-2">
                                 <button
                                   type="button"
-                                  onClick={() => startEditProperty(prop)}
+                                  onClick={() => startEditListing(prop)}
                                   className="inline-flex items-center gap-1 px-3 py-1 bg-[#302f2f] hover:bg-white hover:text-black border border-[#c6c6c6]/40 text-white rounded-full transition-colors cursor-pointer"
                                 >
                                   <Edit3 className="w-3 h-3" />
@@ -562,7 +658,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => setConfirmDeleteId(prop.id)}
+                                  onClick={() => setConfirmDeleteListingId(prop.id)}
                                   aria-label={`Delete ${prop.title}`}
                                   className="p-1 text-white/50 hover:text-red-400 transition-colors cursor-pointer"
                                 >
@@ -580,18 +676,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {/* SECTION 2: ADD / EDIT PROPERTY FORM */}
+          {/* =============================================================== */}
+          {/* SECTION 2: ADD / EDIT PROPERTY FORM                             */}
+          {/* =============================================================== */}
           {activeSection === 'editor' && (
             <div className="max-w-4xl mx-auto bg-white text-black border border-[#c6c6c6] p-6 sm:p-8">
               <div className="flex items-center justify-between pb-6 border-b border-neutral-200">
                 <div>
                   <h3 className="font-roboto text-2xl font-medium text-black">
-                    {editingId
-                      ? `Edit Listing — ${formState.title}`
+                    {editingListingId
+                      ? `Edit Listing — ${listingForm.title}`
                       : 'Add New Property Listing'}
                   </h3>
                   <p className="text-xs text-neutral-600 mt-1">
-                    Updates appear immediately in the Current Listings carousel and Properties directory.
+                    Updates appear immediately in the website Current Listings and Properties directory.
                   </p>
                 </div>
                 <button
@@ -604,7 +702,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </button>
               </div>
 
-              <form onSubmit={handleSaveProperty} className="mt-6 space-y-6">
+              <form onSubmit={handleSaveListing} className="mt-6 space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-black mb-1">
@@ -613,9 +711,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <input
                       type="text"
                       required
-                      value={formState.title}
+                      value={listingForm.title}
                       onChange={(e) =>
-                        setFormState({ ...formState, title: e.target.value })
+                        setListingForm({ ...listingForm, title: e.target.value })
                       }
                       placeholder="e.g. 14A Sill Street"
                       className="zenu-input w-full"
@@ -628,9 +726,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <input
                       type="text"
                       required
-                      value={formState.suburb}
+                      value={listingForm.suburb}
                       onChange={(e) =>
-                        setFormState({ ...formState, suburb: e.target.value })
+                        setListingForm({ ...listingForm, suburb: e.target.value })
                       }
                       placeholder="e.g. Bentley"
                       className="zenu-input w-full"
@@ -643,9 +741,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <input
                       type="text"
                       required
-                      value={formState.address}
+                      value={listingForm.address}
                       onChange={(e) =>
-                        setFormState({ ...formState, address: e.target.value })
+                        setListingForm({ ...listingForm, address: e.target.value })
                       }
                       placeholder="14A Sill Street, Bentley WA 6102"
                       className="zenu-input w-full"
@@ -661,9 +759,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <input
                       type="text"
                       required
-                      value={formState.priceDisplay}
+                      value={listingForm.priceDisplay}
                       onChange={(e) =>
-                        setFormState({ ...formState, priceDisplay: e.target.value })
+                        setListingForm({ ...listingForm, priceDisplay: e.target.value })
                       }
                       placeholder="e.g. Expression of Interest or $750,000"
                       className="zenu-input w-full"
@@ -675,9 +773,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </label>
                     <input
                       type="text"
-                      value={formState.badgeText || ''}
+                      value={listingForm.badgeText || ''}
                       onChange={(e) =>
-                        setFormState({ ...formState, badgeText: e.target.value })
+                        setListingForm({ ...listingForm, badgeText: e.target.value })
                       }
                       placeholder="e.g. Just Listed"
                       className="zenu-input w-full"
@@ -688,10 +786,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       Category
                     </label>
                     <select
-                      value={formState.category}
+                      value={listingForm.category}
                       onChange={(e) =>
-                        setFormState({
-                          ...formState,
+                        setListingForm({
+                          ...listingForm,
                           category: e.target.value as ListingCategory,
                         })
                       }
@@ -714,10 +812,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <input
                       type="number"
                       min={0}
-                      value={formState.bedrooms}
+                      value={listingForm.bedrooms}
                       onChange={(e) =>
-                        setFormState({
-                          ...formState,
+                        setListingForm({
+                          ...listingForm,
                           bedrooms: Number(e.target.value) || 0,
                         })
                       }
@@ -731,10 +829,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <input
                       type="number"
                       min={0}
-                      value={formState.bathrooms}
+                      value={listingForm.bathrooms}
                       onChange={(e) =>
-                        setFormState({
-                          ...formState,
+                        setListingForm({
+                          ...listingForm,
                           bathrooms: Number(e.target.value) || 0,
                         })
                       }
@@ -748,10 +846,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <input
                       type="number"
                       min={0}
-                      value={formState.carSpaces}
+                      value={listingForm.carSpaces}
                       onChange={(e) =>
-                        setFormState({
-                          ...formState,
+                        setListingForm({
+                          ...listingForm,
                           carSpaces: Number(e.target.value) || 0,
                         })
                       }
@@ -765,10 +863,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <input
                       type="number"
                       min={0}
-                      value={formState.landSizeSqm}
+                      value={listingForm.landSizeSqm}
                       onChange={(e) =>
-                        setFormState({
-                          ...formState,
+                        setListingForm({
+                          ...listingForm,
                           landSizeSqm: Number(e.target.value) || 0,
                         })
                       }
@@ -780,9 +878,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       Lead Agent
                     </label>
                     <select
-                      value={formState.agentId}
+                      value={listingForm.agentId}
                       onChange={(e) =>
-                        setFormState({ ...formState, agentId: e.target.value })
+                        setListingForm({ ...listingForm, agentId: e.target.value })
                       }
                       className="zenu-input w-full"
                     >
@@ -795,10 +893,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                 </div>
 
-                {/* Image Picker */}
                 <div className="pt-4 border-t border-neutral-200 space-y-3">
                   <label className="block text-xs font-medium text-black">
-                    Property Photography (Select Original Zenu Image or Paste Custom URL)
+                    Property Photography (Select Preset or Paste Custom URL)
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                     {PRESET_IMAGES.map((img) => (
@@ -806,10 +903,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         key={img.url}
                         type="button"
                         onClick={() =>
-                          setFormState({ ...formState, imageUrl: img.url })
+                          setListingForm({ ...listingForm, imageUrl: img.url })
                         }
                         className={`text-left border p-1.5 transition-all cursor-pointer ${
-                          formState.imageUrl === img.url
+                          listingForm.imageUrl === img.url
                             ? 'border-black bg-neutral-100 ring-1 ring-black'
                             : 'border-neutral-300 hover:border-black'
                         }`}
@@ -829,16 +926,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                   <input
                     type="text"
-                    value={formState.imageUrl}
+                    value={listingForm.imageUrl}
                     onChange={(e) =>
-                      setFormState({ ...formState, imageUrl: e.target.value })
+                      setListingForm({ ...listingForm, imageUrl: e.target.value })
                     }
                     placeholder="https://images.zenu.com.au/..."
                     className="zenu-input w-full"
                   />
                 </div>
 
-                {/* Description */}
                 <div className="space-y-4 pt-4 border-t border-neutral-200">
                   <div>
                     <label className="block text-xs font-medium text-black mb-1">
@@ -846,9 +942,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </label>
                     <input
                       type="text"
-                      value={formState.headline}
+                      value={listingForm.headline}
                       onChange={(e) =>
-                        setFormState({ ...formState, headline: e.target.value })
+                        setListingForm({ ...listingForm, headline: e.target.value })
                       }
                       placeholder="Short summary headline..."
                       className="zenu-input w-full"
@@ -860,9 +956,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </label>
                     <textarea
                       rows={4}
-                      value={formState.description}
+                      value={listingForm.description}
                       onChange={(e) =>
-                        setFormState({ ...formState, description: e.target.value })
+                        setListingForm({ ...listingForm, description: e.target.value })
                       }
                       className="w-full p-3 font-poppins text-sm text-[#363636] bg-[#ededed] border border-[#f7f9fa]"
                     />
@@ -889,14 +985,304 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     Cancel
                   </button>
                   <button type="submit" className="zenu-button">
-                    {editingId ? 'Save Changes' : 'Publish Listing'}
+                    {editingListingId ? 'Save Changes' : 'Publish Listing'}
                   </button>
                 </div>
               </form>
             </div>
           )}
 
-          {/* SECTION 3: ENQUIRIES */}
+          {/* =============================================================== */}
+          {/* SECTION 3: BLOG & NEWS ARTICLES LIST                            */}
+          {/* =============================================================== */}
+          {activeSection === 'blogs' && (
+            <div className="space-y-6 max-w-[1200px] mx-auto">
+              <div className="flex items-center justify-between bg-[#000000] p-5 border border-[#c6c6c6]/30">
+                <div>
+                  <h3 className="font-cormorant text-3xl font-light text-white">
+                    Blog & Market Intelligence Articles
+                  </h3>
+                  <p className="text-xs text-white/60 mt-1">
+                    Add new blog posts or edit existing articles displayed on the Blogs page and Homepage.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={startCreateNewBlog}
+                  className="zenu-button-outline-light gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create New Article
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {blogPosts.map((post) => (
+                  <div
+                    key={post.id}
+                    className="bg-[#000000] border border-[#c6c6c6]/35 flex flex-col justify-between overflow-hidden"
+                  >
+                    <div>
+                      <div className="aspect-16/9 w-full bg-[#302f2f] overflow-hidden">
+                        <PropertyImage
+                          src={post.imageUrl}
+                          alt={post.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="p-6 space-y-2.5">
+                        <div className="flex items-center gap-2 text-[11px] text-white/60">
+                          <span>{post.category}</span>
+                          <span>·</span>
+                          <span>{post.date}</span>
+                        </div>
+                        <h4 className="font-cormorant text-2xl font-light text-white leading-snug">
+                          {post.title}
+                        </h4>
+                        <p className="text-xs text-white/75 line-clamp-3 leading-relaxed">
+                          {post.excerpt}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="px-6 py-4 border-t border-[#302f2f] flex items-center justify-between text-xs">
+                      <span className="text-white/60">By {post.author}</span>
+
+                      {confirmDeleteBlogId === post.id ? (
+                        <div className="inline-flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onDeleteBlogPost(post.id);
+                              setConfirmDeleteBlogId(null);
+                              showToast(`Deleted blog article: ${post.title}`);
+                            }}
+                            className="px-2.5 py-1 bg-red-600 text-white text-[11px] rounded-full cursor-pointer"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteBlogId(null)}
+                            className="px-2.5 py-1 bg-[#302f2f] text-white text-[11px] rounded-full cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="inline-flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => startEditBlog(post)}
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-[#302f2f] hover:bg-white hover:text-black border border-[#c6c6c6]/40 text-white rounded-full transition-colors cursor-pointer"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteBlogId(post.id)}
+                            aria-label={`Delete ${post.title}`}
+                            className="p-1 text-white/50 hover:text-red-400 transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* =============================================================== */}
+          {/* SECTION 4: ADD / EDIT BLOG POST FORM                            */}
+          {/* =============================================================== */}
+          {activeSection === 'blog-editor' && (
+            <div className="max-w-4xl mx-auto bg-white text-black border border-[#c6c6c6] p-6 sm:p-8">
+              <div className="flex items-center justify-between pb-6 border-b border-neutral-200">
+                <div>
+                  <h3 className="font-roboto text-2xl font-medium text-black">
+                    {editingBlogId
+                      ? `Edit Blog Article — ${blogForm.title}`
+                      : 'Publish New Blog Article'}
+                  </h3>
+                  <p className="text-xs text-neutral-600 mt-1">
+                    Articles are published immediately to the Blogs & Market News page.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveSection('blogs')}
+                  className="inline-flex items-center gap-1 text-xs text-neutral-600 hover:text-black cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                  Cancel
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveBlog} className="mt-6 space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium text-black mb-1">
+                      Article Title *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={blogForm.title}
+                      onChange={(e) =>
+                        setBlogForm({ ...blogForm, title: e.target.value })
+                      }
+                      placeholder="e.g. Perth Property Market — May 2026"
+                      className="zenu-input w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-black mb-1">
+                      Publication Date / Month
+                    </label>
+                    <input
+                      type="text"
+                      value={blogForm.date}
+                      onChange={(e) =>
+                        setBlogForm({ ...blogForm, date: e.target.value })
+                      }
+                      placeholder="e.g. May 2026"
+                      className="zenu-input w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-black mb-1">
+                      Category
+                    </label>
+                    <input
+                      type="text"
+                      value={blogForm.category}
+                      onChange={(e) =>
+                        setBlogForm({ ...blogForm, category: e.target.value })
+                      }
+                      placeholder="e.g. Market Update, Property Management"
+                      className="zenu-input w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-black mb-1">
+                      Author(s)
+                    </label>
+                    <input
+                      type="text"
+                      value={blogForm.author}
+                      onChange={(e) =>
+                        setBlogForm({ ...blogForm, author: e.target.value })
+                      }
+                      placeholder="e.g. Wendy Chia & Calvin Liew"
+                      className="zenu-input w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-black mb-1">
+                      Cover Image URL
+                    </label>
+                    <input
+                      type="text"
+                      value={blogForm.imageUrl}
+                      onChange={(e) =>
+                        setBlogForm({ ...blogForm, imageUrl: e.target.value })
+                      }
+                      placeholder="https://images.zenu.com.au/..."
+                      className="zenu-input w-full"
+                    />
+                  </div>
+                </div>
+
+                {/* Preset Cover Image Picker */}
+                <div className="space-y-2">
+                  <label className="block text-xs font-medium text-black">
+                    Or Select Preset Cover Image
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    {PRESET_IMAGES.map((img) => (
+                      <button
+                        key={img.url}
+                        type="button"
+                        onClick={() =>
+                          setBlogForm({ ...blogForm, imageUrl: img.url })
+                        }
+                        className={`text-left border p-1.5 transition-all cursor-pointer ${
+                          blogForm.imageUrl === img.url
+                            ? 'border-black bg-neutral-100 ring-1 ring-black'
+                            : 'border-neutral-300 hover:border-black'
+                        }`}
+                      >
+                        <div className="aspect-4/3 w-full overflow-hidden bg-black mb-1">
+                          <PropertyImage
+                            src={img.url}
+                            alt={img.label}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <p className="text-[11px] font-medium text-black truncate">
+                          {img.label}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-black mb-1">
+                    Summary Excerpt (Shown on Card & Homepage) *
+                  </label>
+                  <textarea
+                    rows={3}
+                    required
+                    value={blogForm.excerpt}
+                    onChange={(e) =>
+                      setBlogForm({ ...blogForm, excerpt: e.target.value })
+                    }
+                    placeholder="Brief summary of the article..."
+                    className="w-full p-3 font-poppins text-sm text-[#363636] bg-[#ededed] border border-[#f7f9fa]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-black mb-1">
+                    Full Article Body (Separate paragraphs with a blank line)
+                  </label>
+                  <textarea
+                    rows={6}
+                    value={blogContentText}
+                    onChange={(e) => setBlogContentText(e.target.value)}
+                    placeholder="Write full article paragraphs here..."
+                    className="w-full p-3 font-poppins text-sm text-[#363636] bg-[#ededed] border border-[#f7f9fa]"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200">
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection('blogs')}
+                    className="px-5 py-2 text-xs font-inter text-black border border-black rounded-full cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="zenu-button">
+                    {editingBlogId ? 'Save Article Changes' : 'Publish Blog Article'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* =============================================================== */}
+          {/* SECTION 5: ENQUIRIES                                            */}
+          {/* =============================================================== */}
           {activeSection === 'enquiries' && (
             <div className="max-w-[1200px] mx-auto bg-[#000000] border border-[#c6c6c6]/30 p-6 sm:p-8">
               <h3 className="font-cormorant text-3xl font-light text-white">
@@ -953,7 +1339,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {/* SECTION 4: TEAM */}
+          {/* =============================================================== */}
+          {/* SECTION 6: TEAM                                                 */}
+          {/* =============================================================== */}
           {activeSection === 'agents' && (
             <div className="max-w-[1200px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {teamMembers.map((member) => (

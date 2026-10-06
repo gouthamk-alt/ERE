@@ -49,6 +49,18 @@ export interface TeamMember {
   initials: string;
 }
 
+export interface BlogPost {
+  id: string;
+  title: string;
+  date: string;
+  category: string;
+  author: string;
+  imageUrl: string;
+  excerpt: string;
+  content: string[];
+  featured?: boolean;
+}
+
 export interface ClientEnquiry {
   id: string;
   type: 'Property Enquiry' | 'Free Appraisal' | 'General Contact' | 'Inspection Registration';
@@ -66,10 +78,59 @@ export interface ClientEnquiry {
 export const BRAND_ASSETS = {
   logoLightOnDark: 'https://images.zenu.com.au/6s1jma11lzt6uqwrysrab8dimoqchdzo.png',
   logoDarkOnLight: 'https://images.zenu.com.au/m4zdoht43j7tvjvtdr9yio5wr2ywg8ut.png',
-  teamBannerImage: 'https://images.zenu.com.au/1200/i3h8ywbdx2iifuvyw3jq1frdmgcl86ws.jpg',
-  blogMay2026Image: 'https://images.zenu.com.au/r9hemizadvmwzlckvwp6neqbhwfb99cm.png',
+  teamBannerImage: '/assets/team-banner.jpg',
+  blogMay2026Image: '/assets/blog-may-2026.jpg',
   heroVimeoEmbed: 'https://player.vimeo.com/video/1097764829?badge=0&autopause=0&player_id=0&app_id=58479&loop=1&background=1&controls=0&keyboard=0&muted=1&autoplay=1&byline=0&title=0',
 };
+
+export const INITIAL_BLOG_POSTS: BlogPost[] = [
+  {
+    id: 'blog-perth-may-2026',
+    title: 'Perth Property Market — May 2026',
+    date: 'May 2026',
+    category: 'Market Update',
+    author: 'Wendy Chia & Calvin Liew',
+    imageUrl: '/assets/blog-may-2026.jpg',
+    excerpt:
+      'Perth’s property market continues to outperform the nation, with rising values, strong buyer demand, and historically low supply creating a rare opportunity for homeowners. In a market defined by speed and competition, exceptional results are increasingly achieved through considered strategy, refined presentation, and expert positioning.',
+    content: [
+      'Perth’s property market continues to outperform the nation, with rising values, strong buyer demand, and historically low supply creating a rare opportunity for homeowners. In a market defined by speed and competition, exceptional results are increasingly achieved through considered strategy, refined presentation, and expert positioning. Explore the key trends shaping Perth in May 2026 and what they could mean for your next move.',
+      'Across Applecross, Mount Pleasant, South Perth, and inner-eastern corridors such as Bentley and Belmont, days on market remain compressed while buyer attendance at first-weekend home opens continues to surge. Well-presented family residences and lock-and-leave apartments are attracting competitive offers from both local owner-occupiers and interstate or international purchasers.',
+      'Whether you are considering selling a family residence, leasing an investment property under the personal supervision of Wendy Chia (Director & Licensee, Licence No. RA84388), or exploring off-market opportunities in Applecross, our team is ready to provide tailored, transparent guidance.'
+    ],
+    featured: true,
+  },
+  {
+    id: 'blog-applecross-leasing-2026',
+    title: 'Maximising Rental Yield & Asset Protection in Inner-South Perth',
+    date: 'April 2026',
+    category: 'Property Management',
+    author: 'Wendy Chia',
+    imageUrl: 'https://images.zenu.com.au/s1mtf0lnpl5qwf0f4jcoe0tygnh3ismw.png',
+    excerpt:
+      'With vacancy rates across Applecross, Como, and South Perth remaining below 1%, strategic tenant selection and proactive maintenance oversight are essential for preserving long-term capital value.',
+    content: [
+      'At Exceptional Real Estate, leasing and property management sit with dedicated specialists on purpose. Overseen personally by Director & Licensee Wendy Chia (Licence No. RA84388), our management portfolio is structured around rigorous tenant vetting, comprehensive ingoing condition reports, and zero-tolerance arrears control.',
+      'Executive relocations and corporate tenants continue to drive strong demand for quality residences near the Swan River foreshore and Canning Bridge transport hub. By aligning preventative maintenance with timely rent reviews, landlords can secure both reliable cash flow and sustained capital appreciation.'
+    ],
+    featured: false,
+  },
+  {
+    id: 'blog-commercial-canning-hwy',
+    title: 'Commercial Precinct Spotlight: Canning Highway & Applecross Village',
+    date: 'March 2026',
+    category: 'Commercial Insight',
+    author: 'Tony Cai & Wendy Chia',
+    imageUrl: 'https://images.zenu.com.au/d5b1ykdixa3hlcejc5m79vlmgwnpy4pg.png',
+    excerpt:
+      'Demand for boutique medical, consulting, and professional office suites along the Canning Highway corridor continues to strengthen as businesses seek high-exposure suburban headquarters.',
+    content: [
+      'Positioned between the Swan River and the Canning Bridge interchange, the Applecross and Mount Pleasant commercial corridor offers connectivity and amenity for professional practices, medical specialists, and boutique corporate offices.',
+      'Our team advises both commercial strata owners and prospective tenants on lease structuring, outgoings transparency, and long-term development feasibility across Greater Perth.'
+    ],
+    featured: false,
+  },
+];
 
 export const INITIAL_TEAM_MEMBERS: TeamMember[] = [
   {

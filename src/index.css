@@ -16,7 +16,9 @@
 
   body {
     font-family: var(--font-montserrat);
-    background-color: #302f2f;
+    background-color: #000000;
+    background-image: linear-gradient(180deg, #302f2f 0%, #141414 45%, #000000 100%);
+    background-attachment: fixed;
     color: #ffffff;
     font-size: 17px;
     line-height: 25.5px;
@@ -55,44 +57,61 @@
   margin-right: auto;
 }
 
+.bg-gradient-to-black {
+  background: linear-gradient(180deg, #302f2f 0%, #161616 55%, #000000 100%);
+}
+
+.bg-gradient-from-black {
+  background: linear-gradient(180deg, #000000 0%, #1c1b1b 60%, #302f2f 100%);
+}
+
+.bg-radial-dark-to-black {
+  background: radial-gradient(circle at 50% 0%, #3a3939 0%, #181818 55%, #000000 100%);
+}
+
+.card-gradient-to-black {
+  background: linear-gradient(165deg, rgba(48, 47, 47, 0.75) 0%, rgba(15, 15, 15, 0.92) 55%, #000000 100%);
+}
+
 .zenu-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 24px;
-  height: 40px;
-  line-height: 40px;
+  padding: 0 26px;
+  height: 42px;
+  line-height: 42px;
   font-family: var(--font-inter);
   color: #ffffff;
-  font-size: 15px;
-  font-weight: 300;
-  border: 1px solid #000000;
+  font-size: 14px;
+  font-weight: 400;
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 50px;
-  background-color: #000000;
+  background: linear-gradient(180deg, #262525 0%, #000000 100%);
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease-in-out;
 }
 
 .zenu-button:hover {
-  background-color: #1c1c1c;
-  border-color: #302f2f;
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
 }
 
 .zenu-button-outline-light {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 24px;
-  height: 40px;
-  line-height: 40px;
+  padding: 0 26px;
+  height: 42px;
+  line-height: 42px;
   font-family: var(--font-inter);
   color: #ffffff;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 300;
-  border: 1px solid #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 50px;
-  background-color: #000000;
+  background-color: rgba(0, 0, 0, 0.65);
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease-in-out;
@@ -101,6 +120,7 @@
 .zenu-button-outline-light:hover {
   background-color: #ffffff;
   color: #000000;
+  border-color: #ffffff;
 }
 
 .zenu-input {

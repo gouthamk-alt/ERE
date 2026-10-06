@@ -6,7 +6,6 @@ import {
   Phone,
   Mail,
   Check,
-  Edit3,
 } from 'lucide-react';
 import { PropertyListing, TeamMember } from '../data/initialData';
 import { PropertyImage } from './PropertyImage';
@@ -15,7 +14,6 @@ interface PropertyDetailModalProps {
   property: PropertyListing | null;
   agents: TeamMember[];
   onClose: () => void;
-  onEditInAdmin: (property: PropertyListing) => void;
   onSubmitEnquiry: (data: {
     type: 'Property Enquiry' | 'Inspection Registration';
     clientName: string;
@@ -31,7 +29,6 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   property,
   agents,
   onClose,
-  onEditInAdmin,
   onSubmitEnquiry,
 }) => {
   const [clientName, setClientName] = React.useState('');
@@ -100,31 +97,18 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             <span className="tabular-nums">Listing #{property.id}</span>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onEditInAdmin(property);
-              }}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-inter text-white bg-[#302f2f] hover:bg-white hover:text-black rounded-full transition-colors whitespace-nowrap cursor-pointer"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              Edit in Admin
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close property details"
-              className="p-2 text-white/70 hover:text-white transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close property details"
+            className="p-2 text-white/70 hover:text-white transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Scrollable Content */}
-        <div className="overflow-y-auto p-6 sm:p-8 space-y-8 bg-[#302f2f]">
+        <div className="overflow-y-auto p-6 sm:p-8 space-y-8 bg-gradient-to-b from-[#302f2f] to-[#000000]">
           {/* Hero Visual */}
           <div className="relative aspect-16/9 w-full bg-black overflow-hidden border border-[#c6c6c6]/30">
             <PropertyImage
@@ -248,7 +232,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
 
             {/* Right 5 Cols: Listing Agents & Direct Enquiry Form */}
             <div className="lg:col-span-5 space-y-6">
-              {/* Listing Agents Card (Matches Original .card-10664 style) */}
+              {/* Listing Agents Card */}
               <div className="bg-[#000000] border border-[#c6c6c6] p-6 space-y-4">
                 <p className="text-xs text-white/60 uppercase tracking-wider font-montserrat">
                   Listing Agents
@@ -295,7 +279,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                 </div>
               </div>
 
-              {/* Enquiry Form (Uses exact .zenu-input #ededed and rounded-full black button) */}
+              {/* Enquiry Form */}
               <div className="bg-white text-black border border-[#c6c6c6] p-6">
                 <h4 className="font-roboto text-xl font-medium text-black">
                   Enquire About This Property
