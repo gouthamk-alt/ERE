@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --page-bg: #302f2f;
+    --section-bg: #000000;
+    --section-width: 1200px;
+    --text-editor-bg: #302f2f;
+    --font-cormorant: 'Cormorant', Georgia, serif;
+    --font-montserrat: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-roboto: 'Roboto', sans-serif;
+    --font-inter: 'Inter', sans-serif;
+    --font-poppins: 'Poppins', sans-serif;
+    --font-manrope: 'Manrope', sans-serif;
+  }
+
+  body {
+    font-family: var(--font-montserrat);
+    background-color: #302f2f;
+    color: #ffffff;
+    font-size: 17px;
+    line-height: 25.5px;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+}
+
+.font-cormorant {
+  font-family: var(--font-cormorant);
+}
+
+.font-montserrat {
+  font-family: var(--font-montserrat);
+}
+
+.font-roboto {
+  font-family: var(--font-roboto);
+}
+
+.font-inter {
+  font-family: var(--font-inter);
+}
+
+.font-poppins {
+  font-family: var(--font-poppins);
+}
+
+.font-manrope {
+  font-family: var(--font-manrope);
+}
+
+.section-container {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.zenu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  height: 40px;
+  line-height: 40px;
+  font-family: var(--font-inter);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 300;
+  border: 1px solid #000000;
+  border-radius: 50px;
+  background-color: #000000;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease-in-out;
+}
+
+.zenu-button:hover {
+  background-color: #1c1c1c;
+  border-color: #302f2f;
+}
+
+.zenu-button-outline-light {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  height: 40px;
+  line-height: 40px;
+  font-family: var(--font-inter);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 300;
+  border: 1px solid #ffffff;
+  border-radius: 50px;
+  background-color: #000000;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease-in-out;
+}
+
+.zenu-button-outline-light:hover {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.zenu-input {
+  padding: 0 15px;
+  height: 42px;
+  font-family: var(--font-poppins);
+  font-size: 14px;
+  font-weight: 400;
+  color: #363636;
+  border: 1px solid #f7f9fa;
+  border-radius: 2px;
+  background-color: #ededed;
+}
+
+.zenu-input:focus {
+  outline: 1px solid #000000;
+  background-color: #ffffff;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

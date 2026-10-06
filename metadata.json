@@ -1,0 +1,6 @@
+{
+  "name": "Exceptional Real Estate | Boutique Perth Property Agency",
+  "description": "Refined residential and commercial property sales, leasing, and asset management in Applecross, Mount Pleasant, and Greater Perth.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
