@@ -12,7 +12,7 @@
 
   body {
     font-family: var(--font-inter);
-    background-color: #141414;
+    background-color: #000000;
     color: #ffffff;
     font-size: 17px;
     line-height: 25.5px;
@@ -226,41 +226,47 @@
 .agent-profile textarea { resize: vertical; }
 .agent-profile .zenu-button-outline-light { height: auto; min-height: 44px; white-space: normal; line-height: 1.5; padding: 12px 22px; }
 
-/* Preview palette: charcoal and white, with one restrained gold accent. */
-.public-site { --accent: #c4ad7b; --accent-hover: #d6c396; }
+/* Client preview: white lettering and controls on black surfaces. */
+.public-site { --accent: #ffffff; --accent-hover: #ededed; }
 .public-site .accent-label, .public-site .accent-link,
 .public-site .property-card-action { color: var(--accent); }
 .public-site .accent-link:hover { color: var(--accent-hover); text-decoration: underline; }
 .public-site .page-content button.underline { color: var(--accent); }
 .public-site .zenu-button, .public-site .home-listings .zenu-button,
-.public-site .accent-button { background: var(--accent); border-color: var(--accent); color: #141414; }
+.public-site .accent-button { background: #000000; border: 1px solid #ffffff80; color: #ffffff; }
 .public-site .zenu-button:hover, .public-site .home-listings .zenu-button:hover,
-.public-site .accent-button:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
-.public-site .zenu-button-outline-light { border-color: #c4ad7b80; color: var(--accent); }
-.public-site .zenu-button-outline-light:hover { background: var(--accent); border-color: var(--accent); color: #141414; }
+.public-site .accent-button:hover { background: #202020; border-color: #ffffff; }
+.public-site .zenu-button-outline-light { border-color: #ffffff80; color: var(--accent); }
+.public-site .zenu-button-outline-light:hover { background: #202020; border-color: #ffffff; color: #ffffff; }
 .public-site .property-card-badge,
 .public-site .home-category-filter[aria-pressed="true"],
-.public-site .agent-listing-filter.is-selected { background: var(--accent); border-color: var(--accent); color: #141414; }
+.public-site .agent-listing-filter.is-selected { background: #ffffff1f; border-color: #ffffff; color: #ffffff; }
+.public-site .property-card-badge { background: #000000d9; color: #ffffff; }
 .public-site header nav button:hover, .public-site footer a:hover { color: var(--accent); }
 .public-site .home-team-person:hover h3 { color: var(--accent); }
 .public-site .editorial-card:hover .card-action,
-.public-site .editorial-card:focus-visible .card-action { background: var(--accent); color: #141414; border-color: var(--accent); }
+.public-site .editorial-card:focus-visible .card-action { background: #202020; color: #ffffff; border-color: #ffffff; }
 
-.compact-search { color: #202020; background: rgba(250,250,248,.96); padding: 7px; border-radius: 3px; max-width: 1100px; }
+.compact-search { color: #ffffff; background: rgba(0,0,0,.72); border: 1px solid #ffffff40; padding: 7px; border-radius: 3px; max-width: 1100px; }
 .compact-search-row { display: grid; grid-template-columns: auto minmax(0,1fr) auto auto; grid-template-areas: "methods query filters submit"; align-items: center; gap: 8px; }
 .search-methods { grid-area: methods; display: flex; gap: 2px; }
-.search-method { padding: 0 14px; min-height: 44px; font-size: 12px; color: #656565; border-radius: 2px; cursor: pointer; transition: color 200ms, background-color 200ms; }
-.search-method.is-selected { background: #e8e3d9; color: #202020; font-weight: 500; }
-.search-method:hover { color: #000; }
-.search-query { grid-area: query; display: flex; align-items: center; min-width: 0; height: 44px; padding: 0 12px; background: white; }
+.search-method { padding: 0 14px; min-height: 44px; font-size: 12px; color: #ffffffb3; border-radius: 2px; cursor: pointer; transition: color 200ms, background-color 200ms; }
+.search-method.is-selected { background: #ffffff1f; color: #ffffff; font-weight: 500; }
+.search-method:hover { color: #ffffff; }
+.search-query { grid-area: query; display: flex; align-items: center; min-width: 0; height: 44px; padding: 0 12px; background: #ffffff0d; }
 .search-query input { font-size: 16px; }
-.search-filter-toggle { grid-area: filters; display: flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 14px; color: #555; font-size: 12px; cursor: pointer; }
-.search-filter-toggle[aria-expanded="true"] { color: #141414; background: #e8e3d9; }
-.search-submit { grid-area: submit; height: 44px; display: flex; justify-content: center; align-items: center; padding: 0 22px; background: var(--accent); color: #141414; font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap; border-radius: 2px; transition: background 200ms; }
-.search-submit:hover { background: var(--accent-hover); }
+.compact-search .search-query input { color: #ffffff; }
+.compact-search .search-query input::placeholder { color: #ffffff99; }
+.compact-search .search-query > svg, .compact-search label { color: #ffffffb3; }
+.public-site .zenu-input { color: #ffffff; background: #000000; border-color: #ffffff40; color-scheme: dark; }
+.public-site .zenu-input:focus { outline: 1px solid #ffffff; background: #151515; }
+.search-filter-toggle { grid-area: filters; display: flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 14px; color: #ffffffb3; font-size: 12px; cursor: pointer; }
+.search-filter-toggle[aria-expanded="true"] { color: #ffffff; background: #ffffff1f; }
+.search-submit { grid-area: submit; height: 44px; display: flex; justify-content: center; align-items: center; padding: 0 22px; background: #000000; border: 1px solid #ffffff80; color: #ffffff; font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap; border-radius: 2px; transition: background 200ms; }
+.search-submit:hover { background: #202020; }
 .search-submit-icon { display: none; }
 .compact-search .filter-expansion.is-open { padding: 0 8px 8px; }
-.compact-search:focus-within { box-shadow: 0 0 0 2px #c4ad7b70; }
+.compact-search:focus-within { box-shadow: 0 0 0 2px #ffffff50; }
 .commercial-band { background: #242424; }
 .commercial-band > img { transform: scale(1.04); }
 .commercial-band-scrim { background: linear-gradient(90deg, rgba(0,0,0,.85), rgba(0,0,0,.45) 55%, rgba(0,0,0,.08)), linear-gradient(0deg, rgba(0,0,0,.4), transparent 70%); }

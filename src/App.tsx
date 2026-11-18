@@ -318,7 +318,7 @@ export default function App() {
   }
 
   if (!contentReady) return (
-    <main className="min-h-screen bg-[#141414] text-white grid place-items-center px-6 text-center">
+    <main className="min-h-screen bg-[#000000] text-white grid place-items-center px-6 text-center">
       <div><h1 className="font-cormorant text-3xl mb-4">Exceptional Real Estate</h1>
         <p role={contentError ? 'alert' : 'status'}>{contentError || 'Loading properties and articles…'}</p>
         {contentError && <button onClick={() => void refreshContent()} className="zenu-button mt-5">Try again</button>}
@@ -327,12 +327,12 @@ export default function App() {
   );
 
   return (
-    <div className="public-site min-h-screen flex flex-col bg-[#141414] text-white font-inter">
+    <div className="public-site min-h-screen flex flex-col bg-[#000000] text-white font-inter">
       {/* =================================================================== */}
       {/* ARCHITECTURAL HEADER (Gradient-to-Black Glass Bar)                  */}
       {/* =================================================================== */}
       {contentError && <div role="alert" className="bg-[#302f2f] px-6 py-3 text-sm">Unable to refresh website content. <button className="underline" onClick={() => void refreshContent()}>Try again</button></div>}
-      <header className="sticky top-0 z-40 h-20 bg-[#141414]/95 backdrop-blur-md text-white px-6 lg:px-12">
+      <header className="sticky top-0 z-40 h-20 bg-[#000000]/95 backdrop-blur-md text-white px-6 lg:px-12">
         <div className="max-w-[1320px] h-full mx-auto flex items-center justify-between gap-6">
           {/* Zone 1: Original Exceptional Real Estate Logo */}
           <a
@@ -622,7 +622,7 @@ export default function App() {
                 className="absolute inset-0 z-10"
                 style={{
                   background:
-                    'linear-gradient(0deg, #141414 0%, transparent 28%), linear-gradient(90deg, rgba(0,0,0,0.72), rgba(0,0,0,0.18))',
+                    'linear-gradient(0deg, #000000 0%, transparent 28%), linear-gradient(90deg, rgba(0,0,0,0.72), rgba(0,0,0,0.18))',
                 }}
               />
 
@@ -777,7 +777,7 @@ export default function App() {
             </section>
 
             {/* 2. CURATED "Explore our properties" (6 LISTINGS WITH A VIEW ALL LINK) */}
-            <section className="home-listings bg-[#141414] text-white py-20 sm:py-28 px-6">
+            <section className="home-listings bg-[#000000] text-white py-20 sm:py-28 px-6">
               <div className="max-w-[1200px] mx-auto space-y-10">
                 {/* Header & Category Filter Pills */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6">
@@ -845,7 +845,7 @@ export default function App() {
             </section>
 
             {/* 3. Familiar faces, visible on the homepage. */}
-            <section className="home-team bg-[#141414] pb-20 sm:pb-28 px-6">
+            <section className="home-team bg-[#000000] pb-20 sm:pb-28 px-6">
               <div className="max-w-[1200px] mx-auto space-y-10">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                   <div className="max-w-2xl space-y-4">
@@ -895,7 +895,7 @@ export default function App() {
               </section>
             )}
 
-            <section className="bg-[#141414] py-20 sm:py-28 px-6">
+            <section className="bg-[#000000] py-20 sm:py-28 px-6">
               <div className="max-w-[1200px] mx-auto">
                 {/* From our team Magazine Card */}
                 {latestBlogHighlight && (
@@ -1514,7 +1514,7 @@ export default function App() {
       {/* =================================================================== */}
       {/* FOOTER WITH GRADIENT-TO-BLACK                                       */}
       {/* =================================================================== */}
-      <footer className="bg-[#141414] text-white py-20 px-6 lg:px-12">
+      <footer className="bg-[#000000] text-white py-20 px-6 lg:px-12">
         <div className="max-w-[1200px] mx-auto space-y-12">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 text-sm font-inter font-light">
             {/* Column 1: Logo & Office Address */}
