@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node server/index.mjs",
     "start": "node --env-file-if-exists=.env.production server/production.mjs",
-    "test": "node --test server/auth.test.mjs",
+    "test": "node --test server/auth.test.mjs server/content.test.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",

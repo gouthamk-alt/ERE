@@ -24,20 +24,26 @@ import {
   BRAND_ASSETS,
 } from '../data/initialData';
 import { PropertyImage } from './PropertyImage';
+import { downloadBrowserBackup, type LegacyContent } from '../legacyContent';
 
 interface AdminDashboardProps {
   listings: PropertyListing[];
   teamMembers: TeamMember[];
   enquiries: ClientEnquiry[];
   blogPosts: BlogPost[];
-  onAddListing: (listing: PropertyListing) => void;
-  onUpdateListing: (listing: PropertyListing) => void;
-  onDeleteListing: (id: string) => void;
-  onAddBlogPost: (post: BlogPost) => void;
-  onUpdateBlogPost: (post: BlogPost) => void;
-  onDeleteBlogPost: (id: string) => void;
+  onAddListing: (listing: PropertyListing) => Promise<boolean>;
+  onUpdateListing: (listing: PropertyListing) => Promise<boolean>;
+  onDeleteListing: (id: string) => Promise<boolean>;
+  onAddBlogPost: (post: BlogPost) => Promise<boolean>;
+  onUpdateBlogPost: (post: BlogPost) => Promise<boolean>;
+  onDeleteBlogPost: (id: string) => Promise<boolean>;
   onUpdateEnquiryStatus: (id: string, status: ClientEnquiry['status']) => void;
-  onResetDemoData: () => void;
+  onRefreshContent: () => Promise<boolean>;
+  contentReady: boolean;
+  contentError: string;
+  saving: boolean;
+  browserEdits: { data: LegacyContent; changes: string[] } | null;
+  onImportBrowserEdits: () => Promise<boolean>;
   onPreviewProperty: (property: PropertyListing) => void;
   onExitAdmin: () => void;
   onLogout: () => Promise<void>;
@@ -121,7 +127,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onUpdateBlogPost,
   onDeleteBlogPost,
   onUpdateEnquiryStatus,
-  onResetDemoData,
+  onRefreshContent,
+  contentReady,
+  contentError,
+  saving,
+  browserEdits,
+  onImportBrowserEdits,
   onPreviewProperty,
   onExitAdmin,
   onLogout,
@@ -169,7 +180,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setActiveSection('editor');
   };
 
-  const handleSaveListing = (e: React.FormEvent) => {
+  const handleSaveListing = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!listingForm.title.trim() || !listingForm.address.trim() || !listingForm.priceDisplay.trim()) {
       showToast('Please complete Street Title, Full Address, and Price Display.');
@@ -187,40 +198,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         ...listingForm,
         features: parsedFeatures.length > 0 ? parsedFeatures : ['Prime Western Australian property'],
       };
-      onUpdateListing(updated);
+      if (!await onUpdateListing(updated)) return;
       showToast(`Updated listing: ${updated.title}`);
     } else {
       const newListing: PropertyListing = {
-        id: `${Date.now().toString().slice(-7)}`,
+        id: crypto.randomUUID(),
         ...listingForm,
         features: parsedFeatures.length > 0 ? parsedFeatures : ['Prime Western Australian property'],
       };
-      onAddListing(newListing);
+      if (!await onAddListing(newListing)) return;
       showToast(`Published new listing: ${newListing.title}`);
     }
     setActiveSection('inventory');
   };
 
-  const handleQuickStatusChange = (prop: PropertyListing, newStatus: ListingStatus) => {
+  const handleQuickStatusChange = async (prop: PropertyListing, newStatus: ListingStatus) => {
     let updatedCategory: ListingCategory = prop.category;
     if (newStatus === 'Sold') updatedCategory = 'Sold';
     if (newStatus === 'Leased') updatedCategory = 'Leased';
     if (newStatus === 'Available' && prop.category === 'Sold') updatedCategory = 'Residential Sale';
 
-    onUpdateListing({
+    if (!await onUpdateListing({
       ...prop,
       status: newStatus,
       category: updatedCategory,
       soldDate: newStatus === 'Sold' ? new Date().toISOString().split('T')[0] : prop.soldDate,
-    });
+    })) return;
     showToast(`Status updated to ${newStatus} for ${prop.title}`);
   };
 
-  const handleToggleFeatured = (prop: PropertyListing) => {
-    onUpdateListing({
+  const handleToggleFeatured = async (prop: PropertyListing) => {
+    if (!await onUpdateListing({
       ...prop,
       featured: !prop.featured,
-    });
+    })) return;
     showToast(
       !prop.featured
         ? `${prop.title} marked as Featured`
@@ -244,7 +255,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setActiveSection('blog-editor');
   };
 
-  const handleSaveBlog = (e: React.FormEvent) => {
+  const handleSaveBlog = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!blogForm.title.trim() || !blogForm.excerpt.trim()) {
       showToast('Please provide a Blog Title and Summary Excerpt.');
@@ -262,15 +273,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         ...blogForm,
         content: paragraphs.length > 0 ? paragraphs : [blogForm.excerpt],
       };
-      onUpdateBlogPost(updatedPost);
+      if (!await onUpdateBlogPost(updatedPost)) return;
       showToast(`Updated blog article: ${updatedPost.title}`);
     } else {
       const newPost: BlogPost = {
-        id: `blog-${Date.now().toString().slice(-5)}`,
+        id: crypto.randomUUID(),
         ...blogForm,
         content: paragraphs.length > 0 ? paragraphs : [blogForm.excerpt],
       };
-      onAddBlogPost(newPost);
+      if (!await onAddBlogPost(newPost)) return;
       showToast(`Published new blog article: ${newPost.title}`);
     }
     setActiveSection('blogs');
@@ -294,7 +305,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const unreadEnquiriesCount = enquiries.filter((e) => e.status === 'New').length;
 
   return (
-    <div className="min-h-screen bg-[#302f2f] text-white flex flex-col lg:flex-row font-inter">
+    <div>
+      {browserEdits && <section className="bg-white text-black px-6 py-5 border-b border-black/20" aria-label="Saved browser edits">
+        <h2 className="font-cormorant text-2xl">Preserve your saved browser edits</h2>
+        <p className="text-sm my-2">Found {browserEdits.changes.length} edits saved in this browser. Review them below, download a backup, then publish them to the shared website. Your browser copy will be retained.</p>
+        <details className="text-sm mb-4"><summary className="cursor-pointer">Review saved edits</summary><ul className="list-disc pl-6 mt-2 max-h-48 overflow-auto">{browserEdits.changes.map((change, index) => <li key={index}>{change}</li>)}</ul></details>
+        <div className="flex flex-wrap gap-3">
+          <button type="button" className="px-4 py-2 border border-black text-sm" onClick={() => downloadBrowserBackup(browserEdits.data)}>Download backup</button>
+          <button type="button" disabled={saving || !contentReady} className="px-4 py-2 bg-black text-white text-sm disabled:opacity-50" onClick={async () => { if (await onImportBrowserEdits()) showToast('Your saved browser edits are now published to the shared website.'); }}>Publish saved browser edits</button>
+        </div>
+      </section>}
+      <div className="bg-black text-white border-b border-white/20 px-6 py-3 text-sm" role={contentError ? 'alert' : 'status'}>
+        {contentError || (saving ? 'Saving to the live website…' : contentReady ? 'Connected to shared website content. Saved edits are published immediately.' : 'Loading shared website content…')}
+        {contentError && <button type="button" disabled={saving} onClick={() => void onRefreshContent()} className="underline ml-3">Reload latest content</button>}
+      </div>
+      <fieldset disabled={saving || !contentReady} className="min-w-0 border-0 p-0 m-0 min-h-screen bg-[#302f2f] text-white flex flex-col lg:flex-row font-inter">
       {/* Left Sidebar Navigation (#000000 Section Background) */}
       <aside className="w-full lg:w-64 bg-[#000000] text-white shrink-0 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-[#c6c6c6]/25">
         <div className="p-6">
@@ -397,14 +422,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="p-6 border-t border-[#302f2f] space-y-3">
           <button
             type="button"
-            onClick={() => {
-              onResetDemoData();
-              showToast('Restored original website listings & blog posts.');
+            onClick={async () => {
+              if (await onRefreshContent()) showToast('Loaded the latest website content.');
             }}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-inter text-white/80 hover:text-white border border-white/30 rounded-full hover:border-white transition-colors cursor-pointer whitespace-nowrap"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            Reset Default Data
+            Reload website content
           </button>
 
           <button
@@ -634,8 +658,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               <div className="inline-flex items-center gap-1.5">
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    onDeleteListing(prop.id);
+                                  onClick={async () => {
+                                    if (!await onDeleteListing(prop.id)) return;
                                     setConfirmDeleteListingId(null);
                                     showToast(`Deleted listing ${prop.title}`);
                                   }}
@@ -1057,8 +1081,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         <div className="inline-flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => {
-                              onDeleteBlogPost(post.id);
+                            onClick={async () => {
+                              if (!await onDeleteBlogPost(post.id)) return;
                               setConfirmDeleteBlogId(null);
                               showToast(`Deleted blog article: ${post.title}`);
                             }}
@@ -1379,6 +1403,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           )}
         </main>
       </div>
+      </fieldset>
     </div>
   );
 };

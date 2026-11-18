@@ -25,12 +25,24 @@ Static-only hosting and `npm run preview` do not run authentication. For standal
 
 The standalone Node server stores sessions and rate limits in memory for one server instance. Multiple replicas need shared storage; the Netlify adapter already provides shared session storage. Restart the Node server after rotating credentials to revoke existing sessions.
 
-## Current content limitation
+## Shared website content
 
-The inherited application stores listings, articles and enquiries in browser localStorage, including its bundled sample enquiries. Dashboard edits affect only that browser; website forms do not deliver enquiries to the agency. Login protects dashboard access, but browser storage is not a secure shared CMS. Before collecting real client enquiries or publishing content edits across visitors, move content and enquiries to a database, remove sample/private enquiries from the client bundle, and protect all admin data APIs with the authentication guard in `server/auth.mjs`.
+Listings and blog posts are stored in Netlify Blobs under `ere-website-content-production`, using strongly consistent reads and conditional writes. This is a shared key/value database for this site's content; no additional database credentials are needed. Production content survives code deployments. Preview deployments use separate per-deploy stores and cannot modify the production store.
+
+`GET /api/content` serves the published listings and posts, with no enquiries or session data. `POST /api/admin/content` requires the existing admin session and validates all changes. The revision returned by the public API must match the current stored revision, so two editing sessions cannot silently overwrite one another. Save failures are shown in the admin panel, and success messages appear only after a confirmed save. New visitors load the latest snapshot; already-open public pages refresh every 30 seconds and when brought back into focus. Content responses are not cached by the browser/CDN. A temporary storage failure shows a retry message instead of silently reverting to demo content. An empty collection remains empty.
+
+The initial snapshot is seeded once from `server/content-seed.json`. Subsequent deploys never reset an existing store. The old reset-to-demo button has been replaced with a reload button. For standalone Node development, content persists in ignored `.ere-data/content.json`; a single-process compare-and-set adapter is used locally. Multi-instance standalone hosting should use shared storage instead.
+
+### Preserve old browser edits
+
+Open `/admin` in the same browser/profile used for the old edits. The migration panel compares its retained listings/blogs against the original site, lists additions/edits/deletions, offers a JSON backup download, and publishes those changes when **Publish saved browser edits** is selected. The original localStorage keys are retained. Import is atomic across both collections and refuses conflicts with newer live edits; it does not partially import or overwrite competing changes. Edits made in a different browser must be imported from that browser. Browser data that was already cleared cannot be recovered by this application.
+
+### Enquiries remain separate
+
+Enquiries and appraisal submissions still use the inherited browser-only demo storage and do not deliver messages to the agency. They are not migrated to the shared content store. Before collecting real client enquiries, connect a protected submission endpoint and delivery/database workflow and remove sample enquiries from the client bundle.
 
 ## Checks
 
-- `npm test`: authentication, cookies, expiry, sign-out, request protection and rate-limit tests.
+- `npm test`: authentication plus shared content CRUD, validation, conflicts, migration and persistence tests.
 - `npx tsc --noEmit`: TypeScript validation.
 - `npm run build`: production frontend build.

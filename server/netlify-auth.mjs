@@ -2,7 +2,7 @@ import { getStore } from '@netlify/blobs';
 import { createAdminAuth } from './auth.mjs';
 
 let auth;
-export default async function handleAdmin(request, context) {
+export async function authenticateAdmin(request, context) {
   // Functions supply the Blobs context automatically. Never expose storage to the browser.
   auth ??= createAdminAuth({
     username: process.env.ADMIN_USERNAME,
@@ -14,6 +14,10 @@ export default async function handleAdmin(request, context) {
       delete: (key) => getStore({ name: 'ere-admin-sessions', consistency: 'strong' }).delete(key),
     },
   });
-  const response = await auth(request, { ip: context.ip });
+  return auth(request, { ip: context.ip });
+}
+
+export default async function handleAdmin(request, context) {
+  const response = await authenticateAdmin(request, context);
   return response || Response.json({ error: 'Not found.' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
 }

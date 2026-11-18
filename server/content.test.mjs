@@ -1,0 +1,155 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { createAdminAuth } from './auth.mjs';
+import { createContentHandler, initialContent, validateItem } from './content.mjs';
+import { createLocalContentStore } from './local-content-store.mjs';
+
+function memoryStore() {
+  let entry = null, generation = 0;
+  return {
+    getWithMetadata: async () => structuredClone(entry),
+    async setJSON(_key, data, options) {
+      if ((options.onlyIfNew && entry) || (options.onlyIfMatch && options.onlyIfMatch !== entry?.etag)) return { modified: false };
+      entry = { data: structuredClone(data), etag: `revision-${++generation}` };
+      return { modified: true, etag: entry.etag };
+    },
+  };
+}
+async function setup(store = memoryStore()) {
+  const sessions = new Map();
+  const auth = createAdminAuth({ username: 'admin-test', password: 'unique-test-password-123', store: sessions });
+  const handler = createContentHandler({ store, authorize: auth });
+  const login = await auth(new Request('https://demo.example/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: 'admin-test', password: 'unique-test-password-123' }) }));
+  const Cookie = login.headers.get('set-cookie').split(';')[0];
+  const read = () => handler(new Request('https://demo.example/api/content'));
+  const mutate = (body, extraHeaders = {}) => handler(new Request('https://demo.example/api/admin/content', {
+    method: 'POST', headers: { Cookie, 'Content-Type': 'application/json', ...extraHeaders }, body: JSON.stringify(body),
+  }));
+  return { store, handler, read, mutate };
+}
+
+test('all existing listings and articles pass the publication schema', () => {
+  for (const collection of ['listings', 'blogPosts']) for (const item of initialContent[collection]) validateItem(collection, item);
+});
+
+test('public content is shared across cold instances and does not expose enquiries or sessions', async () => {
+  const { store, read } = await setup();
+  const response = await read();
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  const first = await response.json();
+  assert.deepEqual(Object.keys(first).sort(), ['blogPosts', 'listings', 'revision']);
+  const { read: secondRead } = await setup(store);
+  assert.deepEqual(await (await secondRead()).json(), first);
+});
+
+test('unauthenticated and cross-origin writes cannot change published content', async () => {
+  const { handler, mutate } = await setup();
+  assert.equal((await handler(new Request('https://demo.example/api/admin/content', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
+  }))).status, 401);
+  assert.equal((await mutate({}, { Origin: 'https://evil.example' })).status, 403);
+  assert.equal((await mutate({}, { 'Content-Type': 'text/plain' })).status, 403);
+});
+
+for (const collection of ['listings', 'blogPosts']) test(`${collection}: create, edit and delete are visible to a separate reader`, async () => {
+  const { store, read, mutate } = await setup();
+  const visitor = (await setup(store)).read;
+  let data = await (await read()).json();
+  const item = { ...initialContent[collection][0], id: 'test-content-item', title: 'Shared content test' };
+  let response = await mutate({ collection, action: 'add', item, revision: data.revision });
+  assert.equal(response.status, 200);
+  data = await response.json();
+  assert.equal((await (await visitor()).json())[collection][0].title, item.title);
+  item.title = 'Updated shared content';
+  response = await mutate({ collection, action: 'update', item, revision: data.revision });
+  assert.equal(response.status, 200);
+  data = await response.json();
+  assert.equal((await (await visitor()).json())[collection][0].title, item.title);
+  response = await mutate({ collection, action: 'delete', id: item.id, revision: data.revision });
+  assert.equal(response.status, 200);
+  assert.ok(!(await (await visitor()).json())[collection].some((entry) => entry.id === item.id));
+});
+
+test('stale revisions and racing writes cannot overwrite a saved edit', async () => {
+  const { store, read, mutate } = await setup();
+  const second = (await setup(store)).mutate;
+  const original = await (await read()).json();
+  const update = (title) => ({ collection: 'listings', action: 'update', revision: original.revision, item: { ...original.listings[0], title } });
+  const results = await Promise.all([mutate(update('First editor')), second(update('Second editor'))]);
+  assert.deepEqual(results.map((r) => r.status).sort(), [200, 409]);
+  assert.equal((await mutate(update('Stale editor'))).status, 409);
+});
+
+test('invalid items, image schemes and arbitrary collection keys are rejected', async () => {
+  const { read, mutate } = await setup();
+  const { revision } = await (await read()).json();
+  const item = { ...initialContent.listings[0], id: 'invalid-test' };
+  for (const bad of [{ ...item, imageUrl: 'javascript:alert(1)' }, { ...item, numericPrice: -1 }, { ...item, status: 'invalid' }, { ...item, title: '' }]) {
+    assert.equal((await mutate({ collection: 'listings', action: 'add', item: bad, revision })).status, 400);
+  }
+  assert.equal((await mutate({ collection: '__proto__', action: 'add', item, revision })).status, 400);
+});
+
+test('deleting every article keeps the shared collection empty after reloading', async () => {
+  const { read, mutate } = await setup();
+  let data = await (await read()).json();
+  for (const item of data.blogPosts) {
+    const response = await mutate({ collection: 'blogPosts', action: 'delete', id: item.id, revision: data.revision });
+    assert.equal(response.status, 200);
+    data = await response.json();
+  }
+  assert.deepEqual((await (await read()).json()).blogPosts, []);
+});
+
+test('browser migration preserves additions, edits and deletes without removing newer live content', async () => {
+  const { read, mutate } = await setup();
+  let data = await (await read()).json();
+  data = await (await mutate({ collection: 'blogPosts', action: 'add', item: { ...data.blogPosts[0], id: 'new-live-article' }, revision: data.revision })).json();
+  const legacy = structuredClone(initialContent);
+  legacy.listings[0].title = 'Previously saved browser edit';
+  const deleted = legacy.blogPosts.pop();
+  const response = await mutate({ action: 'import', legacy, revision: data.revision });
+  assert.equal(response.status, 200);
+  const published = await response.json();
+  assert.equal(published.listings[0].title, legacy.listings[0].title);
+  assert.ok(published.blogPosts.some((post) => post.id === 'new-live-article'));
+  assert.ok(!published.blogPosts.some((post) => post.id === deleted.id));
+});
+
+test('browser migration refuses conflicts and leaves both collections unchanged', async () => {
+  const { read, mutate } = await setup();
+  let data = await (await read()).json();
+  data = await (await mutate({ collection: 'listings', action: 'update', item: { ...data.listings[0], title: 'New live edit' }, revision: data.revision })).json();
+  const legacy = structuredClone(initialContent);
+  legacy.listings[0].title = 'Conflicting browser edit';
+  legacy.blogPosts[0].title = 'Should not be partially imported';
+  const response = await mutate({ action: 'import', legacy, revision: data.revision });
+  assert.equal(response.status, 409);
+  assert.deepEqual(await (await read()).json(), data);
+});
+
+test('storage failures do not report a successful publication', async () => {
+  const { handler } = await setup({ getWithMetadata: async () => { throw new Error('Private details'); } });
+  const response = await handler(new Request('https://demo.example/api/content'));
+  assert.equal(response.status, 503);
+  assert.ok(!(await response.text()).includes('Private details'));
+});
+
+test('local content survives a server-store restart and enforces compare-and-set', async (t) => {
+  const directory = await mkdtemp(path.join(tmpdir(), 'ere-content-test-'));
+  t.after(() => {
+    const target = path.resolve(directory);
+    assert.equal(path.dirname(target), path.resolve(tmpdir()));
+    assert.ok(path.basename(target).startsWith('ere-content-test-'));
+    return rm(target, { recursive: true, force: true });
+  });
+  const first = createLocalContentStore(directory);
+  const write = await first.setJSON('content', { listings: [], blogPosts: [] }, { onlyIfNew: true });
+  assert.equal(write.modified, true);
+  const second = createLocalContentStore(directory);
+  assert.equal((await second.getWithMetadata()).etag, write.etag);
+  assert.equal((await second.setJSON('content', {}, { onlyIfMatch: 'stale' })).modified, false);
+});

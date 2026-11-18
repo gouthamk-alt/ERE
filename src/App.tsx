@@ -18,10 +18,8 @@ import {
   User,
 } from 'lucide-react';
 import {
-  INITIAL_LISTINGS,
   INITIAL_TEAM_MEMBERS,
   INITIAL_ENQUIRIES,
-  INITIAL_BLOG_POSTS,
   BRAND_ASSETS,
   PropertyListing,
   ListingCategory,
@@ -33,6 +31,7 @@ import { PropertyImage } from './components/PropertyImage';
 import { PropertyCard } from './components/PropertyCard';
 import { PropertyDetailModal } from './components/PropertyDetailModal';
 import { AdminAccess } from './components/AdminAccess';
+import { useWebsiteContent } from './useWebsiteContent';
 
 const AdminDashboard = lazy(() => import('./components/AdminDashboard').then((module) => ({ default: module.AdminDashboard })));
 
@@ -44,23 +43,10 @@ type ActivePage =
   | 'videos'
   | 'blog';
 
-const STORAGE_KEY_LISTINGS = 'exceptional_re_zenu_listings_v3';
 const STORAGE_KEY_ENQUIRIES = 'exceptional_re_zenu_enquiries_v3';
-const STORAGE_KEY_BLOGS = 'exceptional_re_zenu_blogs_v3';
 
 export default function App() {
-  const [listings, setListings] = useState<PropertyListing[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_LISTINGS);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // ignore storage error
-    }
-    return INITIAL_LISTINGS;
-  });
+  const { listings, blogPosts, ready: contentReady, error: contentError, saving, refresh: refreshContent, save: saveContent, browserEdits, importBrowserEdits } = useWebsiteContent();
 
   const [enquiries, setEnquiries] = useState<ClientEnquiry[]>(() => {
     try {
@@ -73,19 +59,6 @@ export default function App() {
       // ignore storage error
     }
     return INITIAL_ENQUIRIES;
-  });
-
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_BLOGS);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // ignore storage error
-    }
-    return INITIAL_BLOG_POSTS;
   });
 
   const [teamMembers] = useState<TeamMember[]>(INITIAL_TEAM_MEMBERS);
@@ -127,27 +100,11 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY_LISTINGS, JSON.stringify(listings));
-    } catch {
-      // ignore
-    }
-  }, [listings]);
-
-  useEffect(() => {
-    try {
       localStorage.setItem(STORAGE_KEY_ENQUIRIES, JSON.stringify(enquiries));
     } catch {
       // ignore
     }
   }, [enquiries]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY_BLOGS, JSON.stringify(blogPosts));
-    } catch {
-      // ignore
-    }
-  }, [blogPosts]);
 
   const navigateTo = (page: ActivePage, categoryPreset?: 'ALL' | ListingCategory) => {
     if (categoryPreset) {
@@ -162,51 +119,24 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Admin CRUD Handlers (Strictly used inside AdminDashboard)
-  const handleAddListing = (newListing: PropertyListing) => {
-    setListings((prev) => [newListing, ...prev]);
+  // Publish only after the server confirms a durable save.
+  const handleAddListing = (item: PropertyListing) => saveContent({ collection: 'listings', action: 'add', item });
+  const handleUpdateListing = async (item: PropertyListing) => {
+    const saved = await saveContent({ collection: 'listings', action: 'update', item });
+    if (saved && selectedProperty?.id === item.id) setSelectedProperty(item);
+    return saved;
   };
-
-  const handleUpdateListing = (updated: PropertyListing) => {
-    setListings((prev) =>
-      prev.map((item) => (item.id === updated.id ? updated : item))
-    );
-    if (selectedProperty?.id === updated.id) {
-      setSelectedProperty(updated);
-    }
+  const handleDeleteListing = async (id: string) => {
+    const saved = await saveContent({ collection: 'listings', action: 'delete', id });
+    if (saved && selectedProperty?.id === id) setSelectedProperty(null);
+    return saved;
   };
-
-  const handleDeleteListing = (id: string) => {
-    setListings((prev) => prev.filter((item) => item.id !== id));
-    if (selectedProperty?.id === id) {
-      setSelectedProperty(null);
-    }
-  };
-
-  const handleAddBlogPost = (newPost: BlogPost) => {
-    setBlogPosts((prev) => [newPost, ...prev]);
-  };
-
-  const handleUpdateBlogPost = (updatedPost: BlogPost) => {
-    setBlogPosts((prev) =>
-      prev.map((post) => (post.id === updatedPost.id ? updatedPost : post))
-    );
-  };
-
-  const handleDeleteBlogPost = (id: string) => {
-    setBlogPosts((prev) => prev.filter((post) => post.id !== id));
-    if (selectedBlogPostId === id) {
-      setSelectedBlogPostId(null);
-    }
-  };
-
-  const handleResetDemoData = () => {
-    setListings(INITIAL_LISTINGS);
-    setEnquiries(INITIAL_ENQUIRIES);
-    setBlogPosts(INITIAL_BLOG_POSTS);
-    localStorage.removeItem(STORAGE_KEY_LISTINGS);
-    localStorage.removeItem(STORAGE_KEY_ENQUIRIES);
-    localStorage.removeItem(STORAGE_KEY_BLOGS);
+  const handleAddBlogPost = (item: BlogPost) => saveContent({ collection: 'blogPosts', action: 'add', item });
+  const handleUpdateBlogPost = (item: BlogPost) => saveContent({ collection: 'blogPosts', action: 'update', item });
+  const handleDeleteBlogPost = async (id: string) => {
+    const saved = await saveContent({ collection: 'blogPosts', action: 'delete', id });
+    if (saved && selectedBlogPostId === id) setSelectedBlogPostId(null);
+    return saved;
   };
 
   const handleAddEnquiry = (data: {
@@ -333,7 +263,7 @@ export default function App() {
     return blogPosts.find((b) => b.id === selectedBlogPostId) || null;
   }, [blogPosts, selectedBlogPostId]);
 
-  const latestBlogHighlight = blogPosts[0] || INITIAL_BLOG_POSTS[0];
+  const latestBlogHighlight = blogPosts[0];
 
   if (/^\/admin\/?$/.test(window.location.pathname)) {
     return (
@@ -350,7 +280,12 @@ export default function App() {
           onUpdateBlogPost={handleUpdateBlogPost}
           onDeleteBlogPost={handleDeleteBlogPost}
           onUpdateEnquiryStatus={handleUpdateEnquiryStatus}
-          onResetDemoData={handleResetDemoData}
+          onRefreshContent={refreshContent}
+          contentReady={contentReady}
+          contentError={contentError}
+          saving={saving}
+          browserEdits={browserEdits}
+          onImportBrowserEdits={importBrowserEdits}
           onPreviewProperty={(prop) => setSelectedProperty(prop)}
           onExitAdmin={() => window.location.assign('/')}
           onLogout={logout}
@@ -365,11 +300,21 @@ export default function App() {
     );
   }
 
+  if (!contentReady) return (
+    <main className="min-h-screen bg-[#141414] text-white grid place-items-center px-6 text-center">
+      <div><h1 className="font-cormorant text-3xl mb-4">Exceptional Real Estate</h1>
+        <p role={contentError ? 'alert' : 'status'}>{contentError || 'Loading properties and articles…'}</p>
+        {contentError && <button onClick={() => void refreshContent()} className="zenu-button mt-5">Try again</button>}
+      </div>
+    </main>
+  );
+
   return (
     <div className="public-site min-h-screen flex flex-col bg-[#141414] text-white font-inter">
       {/* =================================================================== */}
       {/* ARCHITECTURAL HEADER (Gradient-to-Black Glass Bar)                  */}
       {/* =================================================================== */}
+      {contentError && <div role="alert" className="bg-[#302f2f] px-6 py-3 text-sm">Unable to refresh website content. <button className="underline" onClick={() => void refreshContent()}>Try again</button></div>}
       <header className="sticky top-0 z-40 h-20 bg-[#000000] text-white px-6 lg:px-12 border-b border-white/10">
         <div className="max-w-[1320px] h-full mx-auto flex items-center justify-between gap-6">
           {/* Zone 1: Original Exceptional Real Estate Logo */}
