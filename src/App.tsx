@@ -323,7 +323,7 @@ export default function App() {
       {/* ARCHITECTURAL HEADER (Gradient-to-Black Glass Bar)                  */}
       {/* =================================================================== */}
       {contentError && <div role="alert" className="bg-[#302f2f] px-6 py-3 text-sm">Unable to refresh website content. <button className="underline" onClick={() => void refreshContent()}>Try again</button></div>}
-      <header className="sticky top-0 z-40 h-20 bg-[#000000] text-white px-6 lg:px-12 border-b border-white/10">
+      <header className="sticky top-0 z-40 h-20 bg-[#141414]/95 backdrop-blur-md text-white px-6 lg:px-12">
         <div className="max-w-[1320px] h-full mx-auto flex items-center justify-between gap-6">
           {/* Zone 1: Original Exceptional Real Estate Logo */}
           <a
@@ -613,7 +613,7 @@ export default function App() {
                 className="absolute inset-0 z-10"
                 style={{
                   background:
-                    'linear-gradient(90deg, rgba(0,0,0,0.72), rgba(0,0,0,0.18))',
+                    'linear-gradient(0deg, #141414 0%, transparent 28%), linear-gradient(90deg, rgba(0,0,0,0.72), rgba(0,0,0,0.18))',
                 }}
               />
 
@@ -654,11 +654,11 @@ export default function App() {
                       navigateTo('listings', 'Sold');
                     }
                   }}
-                  className="property-search mt-12 bg-[#f7f7f7] text-[#202020] p-4 sm:p-5"
+                  className="property-search mt-12 bg-black/30 backdrop-blur-md text-white p-4 sm:p-5"
                 >
                   <div className="flex flex-col lg:flex-row items-stretch gap-3">
                     {/* Buy / Lease / Sold Segmented Selector */}
-                    <div className="flex bg-[#ededed] p-1 shrink-0">
+                    <div className="flex bg-white/10 p-1 shrink-0">
                       {(['Buy', 'Lease', 'Sold'] as const).map((method) => (
                         <button
                           key={method}
@@ -666,8 +666,8 @@ export default function App() {
                           onClick={() => setHeroSaleMethod(method)}
                           className={`px-5 py-2 text-xs font-inter rounded-full transition-colors cursor-pointer ${
                             heroSaleMethod === method
-                              ? 'bg-[#202020] text-white font-medium'
-                              : 'text-[#545454] hover:text-black'
+                              ? 'bg-white text-black font-medium'
+                              : 'text-white/75 hover:text-white'
                           }`}
                         >
                           {method}
@@ -711,9 +711,9 @@ export default function App() {
                   </div>
 
                   <div className={`filter-expansion ${showAdvancedHeroFilters ? 'is-open' : ''}`} inert={!showAdvancedHeroFilters} aria-hidden={!showAdvancedHeroFilters}>
-                    <div><div id="property-search-filters" className="mt-3 pt-3 border-t border-[#d8d8d8] grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
+                    <div><div id="property-search-filters" className="mt-3 pt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
                       <div>
-                        <label className="block text-[11px] text-[#666666] mb-1">
+                        <label className="block text-[11px] text-white/70 mb-1">
                           Property Type
                         </label>
                         <select
@@ -730,7 +730,7 @@ export default function App() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-[11px] text-[#666666] mb-1">
+                        <label className="block text-[11px] text-white/70 mb-1">
                           Minimum Bedrooms
                         </label>
                         <select
@@ -745,7 +745,7 @@ export default function App() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-[11px] text-[#666666] mb-1">
+                        <label className="block text-[11px] text-white/70 mb-1">
                           Listing Agent
                         </label>
                         <select
@@ -768,15 +768,15 @@ export default function App() {
             </section>
 
             {/* 2. CURATED "Explore our properties" (3 LISTINGS BY DEFAULT WITH SHOW MORE) */}
-            <section className="home-listings bg-[#f7f7f7] text-[#202020] py-16 sm:py-24 px-6">
+            <section className="home-listings bg-[#141414] text-white py-20 sm:py-28 px-6">
               <div className="max-w-[1200px] mx-auto space-y-10">
                 {/* Header & Category Filter Pills */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-[#d6d6d6]">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-[#666666] mb-2">
+                    <p className="text-xs uppercase tracking-[0.2em] text-white/60 mb-2">
                       Find your place in Perth
                     </p>
-                    <h2 className="font-cormorant text-4xl sm:text-5xl font-light text-[#202020] tracking-wide">
+                    <h2 className="font-cormorant text-4xl sm:text-5xl font-light text-white tracking-wide">
                       Explore our properties
                     </h2>
                   </div>
@@ -799,8 +799,8 @@ export default function App() {
                         }}
                         className={`px-4 py-1.5 text-xs font-inter rounded-full border transition-colors cursor-pointer ${
                           selectedCategory === tab.value
-                            ? 'bg-[#202020] text-white border-[#202020] font-medium'
-                            : 'bg-transparent text-[#545454] border-[#c9c9c9] hover:border-[#202020]'
+                            ? 'bg-white text-black border-white font-medium'
+                            : 'bg-transparent text-white/70 border-transparent hover:text-white'
                         }`}
                       >
                         {tab.label}
@@ -817,13 +817,13 @@ export default function App() {
                       onSelect={setSelectedProperty} />
                   ))}
                   {homeDisplayedListings.length === 0 && (
-                    <p className="col-span-full py-12 text-[#666666]">No properties match your search. Try another suburb or change your filters.</p>
+                    <p className="col-span-full py-12 text-white/60">No properties match your search. Try another suburb or change your filters.</p>
                   )}
                 </div>
 
                 {/* Show More / View Full Directory Footer Bar (No Add/Edit buttons on public site) */}
-                <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#d6d6d6]">
-                  <p className="text-xs text-[#666666]">
+                <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <p className="text-xs text-white/60">
                     Showing {homeDisplayedListings.length} of {filteredListings.length} properties.
                   </p>
                   <div className="flex flex-wrap items-center gap-3">
@@ -851,7 +851,7 @@ export default function App() {
             </section>
 
             {/* 3. ARCHITECTURAL SPLIT-SHOWCASE: "People who know your neighbourhood." & "How we can help" */}
-            <section className="bg-[#202020] py-24 px-6 border-y border-white/10">
+            <section className="bg-[#141414] py-20 sm:py-28 px-6">
               <div className="max-w-[1200px] mx-auto">
                 <div className="reveal-block grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
                   {/* Left 5 Columns: Proposition & How We Can Help Box */}
@@ -869,14 +869,14 @@ export default function App() {
                     </div>
 
                     {/* Gradient-to-Black Framed Fieldset */}
-                    <fieldset className="service-panel border border-[#c6c6c6]/60 bg-[#202020] p-6 sm:p-8">
-                      <legend className="px-3 font-inter text-lg font-medium text-white">
+                    <fieldset className="service-panel min-w-0 pt-2">
+                      <legend className="pb-4 font-inter text-lg font-medium text-white">
                         How we can help
                       </legend>
                       <p className="font-inter text-sm sm:text-base leading-relaxed font-light text-white/85">
                         Residential and commercial sales are handled by our sales team, leasing and property management are overseen personally by Wendy Chia (Director &amp; Licensee, Licence No. RA84388), and select properties are also available off-market with details shared privately on request.
                       </p>
-                      <div className="pt-6 mt-6 border-t border-white/15 flex flex-wrap items-center gap-4">
+                      <div className="pt-2 mt-6 flex flex-wrap items-center gap-4">
                         <a
                           href="https://www.instagram.com/wendychiarealty/"
                           target="_blank"
@@ -897,7 +897,7 @@ export default function App() {
                   </div>
 
                   {/* Right 7 Columns: Original Agency Banner Framed with Gradient Fade */}
-                  <button type="button" onClick={() => navigateTo('team')} aria-label="Meet the Exceptional Real Estate team" className="editorial-card text-left lg:col-span-7 relative overflow-hidden border border-white/20 bg-black">
+                  <button type="button" onClick={() => navigateTo('team')} aria-label="Meet the Exceptional Real Estate team" className="editorial-card text-left lg:col-span-7 relative overflow-hidden bg-black">
                     <PropertyImage
                       src={BRAND_ASSETS.teamBannerImage}
                       alt="Exceptional Real Estate Applecross Office"
@@ -930,10 +930,10 @@ export default function App() {
             </section>
 
             {/* 4. COMMERCIAL PROPERTIES & LATEST NEWS DUAL SHOWCASE (Gradient-to-Black) */}
-            <section className="bg-[#202020] py-24 px-6">
+            <section className="bg-[#141414] pb-24 sm:pb-32 pt-8 sm:pt-12 px-6">
               <div className="max-w-[1200px] mx-auto space-y-20">
                 {/* Commercial Spotlight */}
-                <div className="reveal-block grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-[#202020] border border-white/20 p-6 sm:p-10">
+                <div className="reveal-block grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
                   <div className="lg:col-span-5 space-y-4">
                     <p className="text-xs uppercase tracking-[0.2em] text-white/60">
                       For your business
@@ -962,7 +962,7 @@ export default function App() {
                         aria-label={`View ${prop.title}, ${prop.suburb}`}
                         key={prop.id}
                         onClick={() => setSelectedProperty(prop)}
-                        className="editorial-card w-full text-left group relative h-[360px] bg-black overflow-hidden border border-white/20 cursor-pointer"
+                        className="editorial-card w-full text-left group relative h-[360px] bg-black overflow-hidden cursor-pointer"
                       >
                         <PropertyImage
                           src={prop.imageUrl}
@@ -1013,7 +1013,7 @@ export default function App() {
                       </button>
                     </div>
 
-                    <button type="button" aria-label={`Read ${latestBlogHighlight.title}`} onClick={() => openBlogPost(latestBlogHighlight.id)} className="editorial-card w-full text-left bg-[#202020] border border-white/20 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+                    <button type="button" aria-label={`Read ${latestBlogHighlight.title}`} onClick={() => openBlogPost(latestBlogHighlight.id)} className="editorial-card w-full text-left bg-transparent grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
                       <div className="lg:col-span-7 overflow-hidden">
                         <PropertyImage
                           src={latestBlogHighlight.imageUrl}
@@ -1021,7 +1021,7 @@ export default function App() {
                           className="w-full h-full object-cover min-h-[340px]"
                         />
                       </div>
-                      <div className="lg:col-span-5 p-8 sm:p-12 flex flex-col justify-center space-y-5">
+                      <div className="lg:col-span-5 py-8 lg:py-10 lg:pl-12 flex flex-col justify-center space-y-5">
                         <span className="text-xs uppercase tracking-widest text-white/60">
                           {latestBlogHighlight.category} · {latestBlogHighlight.date}
                         </span>
@@ -1051,7 +1051,7 @@ export default function App() {
         {/* =================================================================== */}
         {activePage === 'listings' && (
           <section className="py-16 px-6 max-w-[1200px] mx-auto space-y-8">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-white/15">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6">
               <div>
                 <p className="text-xs uppercase tracking-widest text-white/60">
                   Buy, lease or explore recent results
@@ -1329,7 +1329,7 @@ export default function App() {
         {activePage === 'team' && (
           <section className="py-16 px-6 max-w-[1200px] mx-auto space-y-12">
             <div className="text-center">
-              <h1 className="font-cormorant text-[42px] sm:text-[54px] font-bold text-white">
+              <h1 className="font-cormorant text-[42px] sm:text-[54px] leading-tight mb-4 font-normal text-white">
                 Meet the Team
               </h1>
               <p className="font-inter text-sm font-bold text-[#f0f0f0]">
@@ -1341,7 +1341,7 @@ export default function App() {
               {teamMembers.map((member) => (
                 <div
                   key={member.id}
-                  className="team-card border border-[#c6c6c6]/50 bg-[#202020] flex flex-col h-full overflow-hidden"
+                  className="team-card bg-transparent flex flex-col h-full overflow-hidden"
                 >
                   <div className="relative min-h-[384px] w-full overflow-hidden bg-black">
                     <PropertyImage
@@ -1350,7 +1350,7 @@ export default function App() {
                       className="w-full h-full object-cover object-top absolute inset-0"
                     />
                   </div>
-                  <div className="p-6 flex-1 flex flex-col justify-between">
+                  <div className="py-6 flex-1 flex flex-col justify-between">
                     <div>
                       <h2 className="font-cormorant text-3xl font-light text-white mb-1">
                         {member.name}
@@ -1362,7 +1362,7 @@ export default function App() {
                         {member.bio}
                       </p>
                     </div>
-                    <div className="mt-6 pt-5 border-t border-white/15 flex items-center justify-between text-xs text-white">
+                    <div className="mt-6 pt-5 border-t border-white/10 flex items-center justify-between text-xs text-white">
                       <a
                         href={`mailto:${member.email}`}
                         className="flex items-center gap-2 hover:text-white/75"
@@ -1399,7 +1399,7 @@ export default function App() {
               </p>
             </div>
 
-            <div className="aspect-16/9 w-full bg-black border border-white/25 overflow-hidden shadow-2xl">
+            <div className="aspect-16/9 w-full bg-black overflow-hidden">
               <iframe
                 src="https://player.vimeo.com/video/1097764829?badge=0&autopause=0&player_id=0&app_id=58479"
                 title="Exceptional Real Estate Property Showcase"
@@ -1427,7 +1427,7 @@ export default function App() {
                   Back to All Blog Articles
                 </button>
 
-                <article className="bg-[#202020] border border-white/20 overflow-hidden">
+                <article className="bg-transparent overflow-hidden">
                   <div className="aspect-16/9 w-full bg-black overflow-hidden">
                     <PropertyImage
                       src={activeBlogPost.imageUrl}
@@ -1488,7 +1488,7 @@ export default function App() {
             ) : (
               /* Blogs Directory View */
               <div className="space-y-10">
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-white/15">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6">
                   <div>
                     <p className="text-xs uppercase tracking-[0.2em] text-white/60 mb-2">
                       Market Intelligence & Insights
@@ -1523,7 +1523,7 @@ export default function App() {
                     type="button"
                     aria-label={`Read ${filteredBlogs[0].title}`}
                     onClick={() => openBlogPost(filteredBlogs[0].id)}
-                    className="editorial-card w-full text-left bg-[#202020] border border-white/20 grid grid-cols-1 lg:grid-cols-12 overflow-hidden cursor-pointer group hover:border-white/45 transition-colors"
+                    className="editorial-card w-full text-left bg-transparent grid grid-cols-1 lg:grid-cols-12 overflow-hidden cursor-pointer group hover:border-white/45 transition-colors"
                   >
                     <div className="lg:col-span-7 overflow-hidden bg-black">
                       <PropertyImage
@@ -1532,7 +1532,7 @@ export default function App() {
                         className="w-full h-full object-cover min-h-[340px] group-hover:scale-105 transition-transform duration-500"
                       />
                     </div>
-                    <div className="lg:col-span-5 p-8 sm:p-12 flex flex-col justify-center space-y-4">
+                    <div className="lg:col-span-5 py-8 lg:py-10 lg:pl-12 flex flex-col justify-center space-y-4">
                       <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-white/60">
                         <span>{filteredBlogs[0].category}</span>
                         <span>·</span>
@@ -1563,7 +1563,7 @@ export default function App() {
                     <button type="button" aria-label={`Read ${post.title}`}
                       key={post.id}
                       onClick={() => openBlogPost(post.id)}
-                      className="editorial-card w-full text-left bg-[#202020] border border-white/20 hover:border-white/50 transition-all cursor-pointer flex flex-col justify-between overflow-hidden group"
+                      className="editorial-card w-full text-left bg-transparent transition-all cursor-pointer flex flex-col justify-between overflow-hidden group"
                     >
                       <div>
                         <div className="aspect-16/9 w-full bg-black overflow-hidden">
@@ -1606,7 +1606,7 @@ export default function App() {
       {/* =================================================================== */}
       {/* FOOTER WITH GRADIENT-TO-BLACK                                       */}
       {/* =================================================================== */}
-      <footer className="bg-[#202020] text-white py-16 px-6 lg:px-12 border-t border-white/15">
+      <footer className="bg-[#141414] text-white py-20 px-6 lg:px-12">
         <div className="max-w-[1200px] mx-auto space-y-12">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 text-sm font-inter font-light">
             {/* Column 1: Logo & Office Address */}
