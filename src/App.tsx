@@ -32,6 +32,7 @@ import { PropertyCard } from './components/PropertyCard';
 import { PropertyDetailModal } from './components/PropertyDetailModal';
 import { AdminAccess } from './components/AdminAccess';
 import { useWebsiteContent } from './useWebsiteContent';
+import { usePageMotion } from './usePageMotion';
 
 const AdminDashboard = lazy(() => import('./components/AdminDashboard').then((module) => ({ default: module.AdminDashboard })));
 
@@ -63,6 +64,7 @@ export default function App() {
 
   const [teamMembers] = useState<TeamMember[]>(INITIAL_TEAM_MEMBERS);
   const [activePage, setActivePage] = useState<ActivePage>('home');
+  usePageMotion(activePage, contentReady);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
@@ -116,7 +118,13 @@ export default function App() {
     setActivePage(page);
     setMobileMenuOpen(false);
     setOpenDropdown(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    window.requestAnimationFrame(() => document.querySelector<HTMLElement>('.page-content')?.focus({ preventScroll: true }));
+  };
+
+  const openBlogPost = (id: string) => {
+    setSelectedBlogPostId(id);
+    navigateTo('blog');
   };
 
   // Publish only after the server confirms a durable save.
@@ -330,7 +338,7 @@ export default function App() {
               src={BRAND_ASSETS.logoLightOnDark}
               alt="Exceptional Real Estate"
               referrerPolicy="no-referrer"
-              className="h-11 sm:h-12 w-auto object-contain"
+              className="brand-logo h-11 sm:h-12 w-auto object-contain"
             />
           </a>
 
@@ -340,6 +348,8 @@ export default function App() {
             <div
               className="relative"
               onMouseEnter={() => setOpenDropdown('buy')}
+              onFocus={() => setOpenDropdown('buy')}
+              onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpenDropdown(null); }}
               onMouseLeave={() => setOpenDropdown(null)}
             >
               <button
@@ -381,6 +391,8 @@ export default function App() {
             <div
               className="relative"
               onMouseEnter={() => setOpenDropdown('lease')}
+              onFocus={() => setOpenDropdown('lease')}
+              onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpenDropdown(null); }}
               onMouseLeave={() => setOpenDropdown(null)}
             >
               <button
@@ -422,6 +434,8 @@ export default function App() {
             <div
               className="relative"
               onMouseEnter={() => setOpenDropdown('list')}
+              onFocus={() => setOpenDropdown('list')}
+              onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpenDropdown(null); }}
               onMouseLeave={() => setOpenDropdown(null)}
             >
               <button
@@ -502,7 +516,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Open menu"
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'} aria-expanded={mobileMenuOpen} aria-controls="mobile-navigation"
               className="lg:hidden p-2 text-white cursor-pointer"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -512,7 +526,7 @@ export default function App() {
 
         {/* Mobile Drawer */}
         {mobileMenuOpen && (
-          <div className="lg:hidden fixed inset-x-0 top-20 bg-[#202020] border-b border-white/15 p-6 space-y-4 z-50">
+          <div id="mobile-navigation" className="mobile-navigation lg:hidden fixed inset-x-0 top-20 bg-[#202020] border-b border-white/15 p-6 space-y-4 z-50">
             <div className="flex flex-col space-y-3 text-sm font-inter">
               <button
                 type="button"
@@ -576,7 +590,7 @@ export default function App() {
       </header>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1">
+      <main key={activePage} className="page-content flex-1" tabIndex={-1}>
         {/* =================================================================== */}
         {/* HOME VIEW — ARCHITECTURAL GRADIENT-TO-BLACK LAYOUT                  */}
         {/* =================================================================== */}
@@ -696,8 +710,8 @@ export default function App() {
                     </button>
                   </div>
 
-                  {showAdvancedHeroFilters && (
-                    <div id="property-search-filters" className="mt-3 pt-3 border-t border-[#d8d8d8] grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
+                  <div className={`filter-expansion ${showAdvancedHeroFilters ? 'is-open' : ''}`} inert={!showAdvancedHeroFilters} aria-hidden={!showAdvancedHeroFilters}>
+                    <div><div id="property-search-filters" className="mt-3 pt-3 border-t border-[#d8d8d8] grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
                       <div>
                         <label className="block text-[11px] text-[#666666] mb-1">
                           Property Type
@@ -747,8 +761,8 @@ export default function App() {
                           ))}
                         </select>
                       </div>
-                    </div>
-                  )}
+                    </div></div>
+                  </div>
                 </form>
               </div>
             </section>
@@ -839,7 +853,7 @@ export default function App() {
             {/* 3. ARCHITECTURAL SPLIT-SHOWCASE: "People who know your neighbourhood." & "How we can help" */}
             <section className="bg-[#202020] py-24 px-6 border-y border-white/10">
               <div className="max-w-[1200px] mx-auto">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                <div className="reveal-block grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
                   {/* Left 5 Columns: Proposition & How We Can Help Box */}
                   <div className="lg:col-span-5 space-y-8">
                     <div className="space-y-4">
@@ -855,7 +869,7 @@ export default function App() {
                     </div>
 
                     {/* Gradient-to-Black Framed Fieldset */}
-                    <fieldset className="border border-[#c6c6c6]/60 bg-[#202020] p-6 sm:p-8">
+                    <fieldset className="service-panel border border-[#c6c6c6]/60 bg-[#202020] p-6 sm:p-8">
                       <legend className="px-3 font-inter text-lg font-medium text-white">
                         How we can help
                       </legend>
@@ -883,7 +897,7 @@ export default function App() {
                   </div>
 
                   {/* Right 7 Columns: Original Agency Banner Framed with Gradient Fade */}
-                  <div className="lg:col-span-7 relative overflow-hidden border border-white/20 bg-black">
+                  <button type="button" onClick={() => navigateTo('team')} aria-label="Meet the Exceptional Real Estate team" className="editorial-card text-left lg:col-span-7 relative overflow-hidden border border-white/20 bg-black">
                     <PropertyImage
                       src={BRAND_ASSETS.teamBannerImage}
                       alt="Exceptional Real Estate Applecross Office"
@@ -905,15 +919,12 @@ export default function App() {
                           2/28 Kintail Road, Applecross WA 6153
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => navigateTo('team')}
-                        className="text-xs font-inter underline text-white/90 hover:text-white cursor-pointer"
+                      <span className="card-action text-xs font-inter underline text-white/90"
                       >
                         Meet our team
-                      </button>
+                      </span>
                     </div>
-                  </div>
+                  </button>
                 </div>
               </div>
             </section>
@@ -922,7 +933,7 @@ export default function App() {
             <section className="bg-[#202020] py-24 px-6">
               <div className="max-w-[1200px] mx-auto space-y-20">
                 {/* Commercial Spotlight */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-[#202020] border border-white/20 p-6 sm:p-10">
+                <div className="reveal-block grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-[#202020] border border-white/20 p-6 sm:p-10">
                   <div className="lg:col-span-5 space-y-4">
                     <p className="text-xs uppercase tracking-[0.2em] text-white/60">
                       For your business
@@ -946,10 +957,12 @@ export default function App() {
 
                   <div className="lg:col-span-7">
                     {commercialListings.slice(0, 1).map((prop) => (
-                      <div
+                      <button
+                        type="button"
+                        aria-label={`View ${prop.title}, ${prop.suburb}`}
                         key={prop.id}
                         onClick={() => setSelectedProperty(prop)}
-                        className="group relative h-[360px] bg-black overflow-hidden border border-white/20 cursor-pointer"
+                        className="editorial-card w-full text-left group relative h-[360px] bg-black overflow-hidden border border-white/20 cursor-pointer"
                       >
                         <PropertyImage
                           src={prop.imageUrl}
@@ -979,7 +992,7 @@ export default function App() {
                             Inspect Property
                           </span>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -1000,7 +1013,7 @@ export default function App() {
                       </button>
                     </div>
 
-                    <div className="bg-[#202020] border border-white/20 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+                    <button type="button" aria-label={`Read ${latestBlogHighlight.title}`} onClick={() => openBlogPost(latestBlogHighlight.id)} className="editorial-card w-full text-left bg-[#202020] border border-white/20 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
                       <div className="lg:col-span-7 overflow-hidden">
                         <PropertyImage
                           src={latestBlogHighlight.imageUrl}
@@ -1019,19 +1032,13 @@ export default function App() {
                           {latestBlogHighlight.excerpt}
                         </p>
                         <div className="pt-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedBlogPostId(latestBlogHighlight.id);
-                              navigateTo('blog');
-                            }}
-                            className="zenu-button-outline-light"
+                          <span className="card-action zenu-button-outline-light"
                           >
                             Read article
-                          </button>
+                          </span>
                         </div>
                       </div>
-                    </div>
+                    </button>
                   </div>
                 )}
               </div>
@@ -1334,7 +1341,7 @@ export default function App() {
               {teamMembers.map((member) => (
                 <div
                   key={member.id}
-                  className="border border-[#c6c6c6]/50 bg-[#202020] flex flex-col h-full overflow-hidden"
+                  className="team-card border border-[#c6c6c6]/50 bg-[#202020] flex flex-col h-full overflow-hidden"
                 >
                   <div className="relative min-h-[384px] w-full overflow-hidden bg-black">
                     <PropertyImage
@@ -1512,9 +1519,11 @@ export default function App() {
 
                 {/* Featured Lead Article */}
                 {filteredBlogs[0] && (
-                  <div
-                    onClick={() => setSelectedBlogPostId(filteredBlogs[0].id)}
-                    className="bg-[#202020] border border-white/20 grid grid-cols-1 lg:grid-cols-12 overflow-hidden cursor-pointer group hover:border-white/45 transition-colors"
+                  <button
+                    type="button"
+                    aria-label={`Read ${filteredBlogs[0].title}`}
+                    onClick={() => openBlogPost(filteredBlogs[0].id)}
+                    className="editorial-card w-full text-left bg-[#202020] border border-white/20 grid grid-cols-1 lg:grid-cols-12 overflow-hidden cursor-pointer group hover:border-white/45 transition-colors"
                   >
                     <div className="lg:col-span-7 overflow-hidden bg-black">
                       <PropertyImage
@@ -1545,16 +1554,16 @@ export default function App() {
                         </span>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 )}
 
                 {/* All Blog Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filteredBlogs.map((post) => (
-                    <article
+                    <button type="button" aria-label={`Read ${post.title}`}
                       key={post.id}
-                      onClick={() => setSelectedBlogPostId(post.id)}
-                      className="bg-[#202020] border border-white/20 hover:border-white/50 transition-all cursor-pointer flex flex-col justify-between overflow-hidden group"
+                      onClick={() => openBlogPost(post.id)}
+                      className="editorial-card w-full text-left bg-[#202020] border border-white/20 hover:border-white/50 transition-all cursor-pointer flex flex-col justify-between overflow-hidden group"
                     >
                       <div>
                         <div className="aspect-16/9 w-full bg-black overflow-hidden">
@@ -1585,7 +1594,7 @@ export default function App() {
                           <ArrowUpRight className="w-3.5 h-3.5" />
                         </span>
                       </div>
-                    </article>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -1606,7 +1615,7 @@ export default function App() {
                 src={BRAND_ASSETS.logoLightOnDark}
                 alt="Exceptional Real Estate"
                 referrerPolicy="no-referrer"
-                className="h-10 w-auto object-contain"
+                className="brand-logo h-10 w-auto object-contain"
               />
               <div className="flex items-start gap-2 text-xs text-white/80">
                 <MapPin className="w-4 h-4 shrink-0 mt-0.5" />
@@ -1740,8 +1749,6 @@ export default function App() {
           <div className="pt-8 border-t border-white/10 flex flex-wrap items-center justify-between gap-4 text-xs text-white/60">
             <span>© {new Date().getFullYear()} Exceptional Real Estate · Applecross WA 6153</span>
             <div className="flex items-center gap-3">
-              <span>Designed &amp; Powered by Zenu</span>
-              <span>|</span>
               <button
                 type="button"
                 onClick={() => navigateTo('list-with-us')}

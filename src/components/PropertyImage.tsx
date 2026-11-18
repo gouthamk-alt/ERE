@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Building2 } from 'lucide-react';
 
 interface PropertyImageProps {
@@ -15,6 +15,7 @@ export const PropertyImage: React.FC<PropertyImageProps> = ({
   fallbackLabel = 'Exceptional Real Estate',
 }) => {
   const [hasError, setHasError] = useState(false);
+  useEffect(() => setHasError(false), [src]);
 
   if (hasError || !src) {
     return (

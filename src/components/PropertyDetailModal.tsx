@@ -6,6 +6,8 @@ import {
   Phone,
   Mail,
   Check,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { PropertyListing, TeamMember } from '../data/initialData';
 import { PropertyImage } from './PropertyImage';
@@ -38,6 +40,35 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   const [message, setMessage] = React.useState('');
   const [submitted, setSubmitted] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState('');
+  const [imageIndex, setImageIndex] = React.useState(0);
+  const panel = React.useRef<HTMLDivElement>(null);
+  const close = React.useRef(onClose);
+  close.current = onClose;
+  const gallery = property ? [...new Set([property.imageUrl, ...(property.galleryUrls || [])].filter(Boolean))] : [];
+
+  React.useEffect(() => {
+    if (!property) return;
+    setImageIndex(0);
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    panel.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); close.current(); return; }
+      if (event.key !== 'Tab' || !panel.current) return;
+      const controls = [...panel.current.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input, textarea, select, [tabindex="0"]')]
+        .filter((element) => element.getClientRects().length > 0);
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKey);
+      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+    };
+  }, [property?.id]);
 
   React.useEffect(() => {
     if (property) {
@@ -79,12 +110,13 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-xs p-4 sm:p-6 overflow-y-auto"
+      className="property-dialog-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-xs p-4 sm:p-6 overflow-y-auto"
+      onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-property-title"
     >
-      <div className="relative w-full max-w-[1100px] bg-[#000000] text-white border border-[#c6c6c6]/40 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+      <div ref={panel} className="property-dialog-panel relative w-full max-w-[1100px] bg-[#000000] text-white border border-[#c6c6c6]/40 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
         {/* Top Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-[#000000] border-b border-[#302f2f] shrink-0">
           <div className="flex items-center gap-3 text-xs text-white/70 font-inter">
@@ -112,12 +144,19 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           {/* Hero Visual */}
           <div className="relative aspect-16/9 w-full bg-black overflow-hidden border border-[#c6c6c6]/30">
             <PropertyImage
-              src={property.imageUrl}
+              key={gallery[imageIndex] || property.imageUrl}
+              src={gallery[imageIndex] || property.imageUrl}
               alt={property.address}
               fallbackLabel={property.title}
-              className="w-full h-full object-cover"
+              className="gallery-image w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+
+            {gallery.length > 1 && <>
+              <span className="absolute top-4 right-4 bg-black/70 px-3 py-1 text-xs tabular-nums" role="status">Photo {imageIndex + 1} of {gallery.length}</span>
+              <button type="button" className="gallery-control absolute left-4 top-1/2 -translate-y-1/2" aria-label="Previous property photo" onClick={() => setImageIndex((index) => (index - 1 + gallery.length) % gallery.length)}><ChevronLeft className="w-5 h-5" /></button>
+              <button type="button" className="gallery-control absolute right-4 top-1/2 -translate-y-1/2" aria-label="Next property photo" onClick={() => setImageIndex((index) => (index + 1) % gallery.length)}><ChevronRight className="w-5 h-5" /></button>
+            </>}
 
             {property.badgeText && (
               <div className="absolute top-4 left-4 bg-black/85 text-white text-xs font-inter px-3 py-1 border border-white/20">
@@ -149,6 +188,10 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               </div>
             </div>
           </div>
+
+          {gallery.length > 1 && <div className="flex gap-2 overflow-x-auto pb-2" aria-label="Property photo gallery">
+            {gallery.map((url, index) => <button type="button" key={url} aria-label={`Show property photo ${index + 1}`} aria-pressed={imageIndex === index} className="gallery-thumbnail" onClick={() => setImageIndex(index)}><PropertyImage src={url} alt="" className="w-full h-full object-cover" /></button>)}
+          </div>}
 
           {/* Key Specifications Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 py-5 px-6 bg-[#000000] border border-[#c6c6c6]/30">

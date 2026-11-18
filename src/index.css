@@ -29,6 +29,12 @@
   font-family: var(--font-inter);
 }
 
+/* Drop the black image backdrop against the site's dark surfaces, preserving the original wordmark. */
+.brand-logo {
+  display: block;
+  mix-blend-mode: screen;
+}
+
 .section-container {
   max-width: 1200px;
   margin-left: auto;
@@ -148,6 +154,86 @@
 .property-card-specs svg { width: 16px; height: 16px; color: #686868; stroke-width: 1.5; }
 .property-card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e0e0e0; padding-top: 15px; margin-top: auto; color: #606060; font-size: 11px; }
 .property-card-footer svg { width: 18px; height: 18px; }
+.property-card-action { display: inline-flex; align-items: center; gap: 6px; color: #202020; white-space: nowrap; }
+.property-card-footer > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 10px; }
+
+/* Quiet, consistent movement across actionable cards and controls. */
+.public-site { --ease-out: cubic-bezier(.22, 1, .36, 1); }
+.page-content { scroll-margin-top: 100px; }
+.page-content:focus { outline: none; }
+.page-content > * { animation: page-arrive 480ms var(--ease-out) both; }
+.public-site .property-card,
+.public-site .editorial-card,
+.public-site .team-card {
+  border-radius: 5px;
+  transition: transform 420ms var(--ease-out), box-shadow 420ms var(--ease-out), border-color 300ms ease;
+}
+.public-site .property-card { box-shadow: 0 1px 0 rgba(0,0,0,.07); overflow: hidden; }
+.public-site .editorial-card { cursor: pointer; }
+.public-site .editorial-card img,
+.public-site .team-card img,
+.public-site .property-card img { transition: transform 750ms var(--ease-out); }
+.public-site .editorial-card:focus-visible { outline: 2px solid #fff; outline-offset: 5px; }
+.public-site .property-card:focus-within { box-shadow: 0 12px 28px rgba(0,0,0,.12); }
+.public-site .property-card-footer svg,
+.public-site .editorial-card svg,
+.public-site .team-card a svg { transition: transform 350ms var(--ease-out); }
+.public-site .card-action { transition: color 250ms, background-color 250ms, border-color 250ms; }
+.public-site .editorial-card:focus-visible .card-action { background: white; color: black; }
+.public-site button:active:not(:disabled) { scale: .99; }
+.public-site button { -webkit-tap-highlight-color: transparent; }
+.public-site button, .public-site a { touch-action: manipulation; }
+.public-site button:disabled { cursor: wait; }
+.public-site header { box-shadow: 0 4px 24px rgba(0,0,0,.12); }
+.public-site header nav > button,
+.public-site header nav > div > button { position: relative; }
+.public-site header nav > button::after,
+.public-site header nav > div > button::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+  background: currentColor; transform: scaleX(0); transform-origin: left;
+  transition: transform 300ms var(--ease-out);
+}
+.public-site header nav button:focus-visible::after { transform: scaleX(1); }
+.public-site header nav > div > div { animation: menu-arrive 180ms var(--ease-out) both; }
+.mobile-navigation { animation: menu-arrive 220ms var(--ease-out) both; max-height: calc(100dvh - 80px); overflow-y: auto; }
+.property-search { transition: box-shadow 300ms, border-radius 300ms; }
+.property-search:focus-within { box-shadow: 0 0 0 3px rgba(255,255,255,.22), 0 12px 35px rgba(0,0,0,.16); }
+.filter-expansion { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 380ms var(--ease-out), opacity 250ms ease; }
+.filter-expansion.is-open { grid-template-rows: 1fr; opacity: 1; }
+.filter-expansion > div { min-height: 0; overflow: hidden; }
+.service-panel { border-radius: 5px; }
+.public-site .reveal-ready {
+  transition: opacity 650ms var(--ease-out), translate 650ms var(--ease-out), transform 420ms var(--ease-out), box-shadow 420ms var(--ease-out), border-color 300ms;
+}
+.public-site .reveal-ready:not(.is-visible):not(:focus-within) { opacity: 0; translate: 0 18px; }
+.property-dialog-backdrop { animation: dialog-backdrop 200ms ease both; }
+.property-dialog-panel { animation: dialog-arrive 380ms cubic-bezier(.22,1,.36,1) both; border-radius: 6px; }
+.gallery-image { animation: gallery-arrive 300ms ease both; }
+.gallery-control { width: 42px; height: 42px; border-radius: 50%; background: rgba(0,0,0,.65); color: white; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.45); transition: background 200ms, transform 200ms; }
+.gallery-control:hover { background: #000; transform: scale(1.06); }
+.gallery-thumbnail { width: 88px; aspect-ratio: 4/3; flex-shrink: 0; padding: 3px; border: 1px solid transparent; opacity: .65; transition: opacity 200ms, border-color 200ms; }
+.gallery-thumbnail[aria-pressed="true"] { border-color: white; opacity: 1; }
+.gallery-thumbnail:hover { opacity: 1; }
+.property-dialog-panel :focus-visible { outline: 2px solid #c6c6c6; outline-offset: 3px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .public-site .property-card:hover,
+  .public-site .editorial-card:hover,
+  .public-site .team-card:hover { transform: translateY(-4px); box-shadow: 0 16px 38px rgba(0,0,0,.16); border-color: rgba(255,255,255,.45); }
+  .public-site .property-card:hover img,
+  .public-site .editorial-card:hover img,
+  .public-site .team-card:hover img { transform: scale(1.035); }
+  .public-site .property-card:hover .property-card-footer svg,
+  .public-site .editorial-card:hover svg { transform: translate(2px,-2px); }
+  .public-site .team-card a:hover svg { transform: translateY(-2px); }
+  .public-site .editorial-card:hover .card-action { background: white; color: black; }
+  .public-site header nav button:hover::after { transform: scaleX(1); }
+}
+@keyframes page-arrive { from { opacity: .2; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes menu-arrive { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
+@keyframes dialog-backdrop { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dialog-arrive { from { opacity: 0; transform: translateY(18px) scale(.99); } to { opacity: 1; transform: none; } }
+@keyframes gallery-arrive { from { opacity: .45; } to { opacity: 1; } }
 
 @media (max-width: 767px) {
   .property-search { margin-top: 32px; }
@@ -155,6 +241,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .public-site .reveal-ready { opacity: 1 !important; translate: none !important; }
+  .public-site .property-card, .public-site .editorial-card, .public-site .team-card,
+  .public-site button, .gallery-control { transform: none !important; scale: none !important; }
+  .public-site img { transform: none !important; }
   *, ::before, ::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

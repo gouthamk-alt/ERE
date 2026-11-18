@@ -328,7 +328,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               src={BRAND_ASSETS.logoLightOnDark}
               alt="Exceptional Real Estate"
               referrerPolicy="no-referrer"
-              className="h-10 object-contain mb-3"
+              className="brand-logo h-10 object-contain mb-3"
             />
             <p className="text-xs text-white/60">
               Admin Management Portal
