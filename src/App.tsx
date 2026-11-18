@@ -30,6 +30,7 @@ import {
 import { PropertyImage } from './components/PropertyImage';
 import { PropertyCard } from './components/PropertyCard';
 import { PropertyDetailModal } from './components/PropertyDetailModal';
+import { TeamMemberProfile } from './components/TeamMemberProfile';
 import { AdminAccess } from './components/AdminAccess';
 import { useWebsiteContent } from './useWebsiteContent';
 import { usePageMotion } from './usePageMotion';
@@ -41,6 +42,7 @@ type ActivePage =
   | 'listings'
   | 'list-with-us'
   | 'team'
+  | 'team-profile'
   | 'videos'
   | 'blog';
 
@@ -64,6 +66,7 @@ export default function App() {
 
   const [teamMembers] = useState<TeamMember[]>(INITIAL_TEAM_MEMBERS);
   const [activePage, setActivePage] = useState<ActivePage>('home');
+  const [selectedTeamMemberId, setSelectedTeamMemberId] = useState<string | null>(null);
   usePageMotion(activePage, contentReady);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -126,6 +129,12 @@ export default function App() {
     setSelectedBlogPostId(id);
     navigateTo('blog');
   };
+
+  const openTeamMember = (id: string) => {
+    setSelectedTeamMemberId(id);
+    navigateTo('team-profile');
+  };
+  const selectedTeamMember = teamMembers.find((member) => member.id === selectedTeamMemberId);
 
   // Publish only after the server confirms a durable save.
   const handleAddListing = (item: PropertyListing) => saveContent({ collection: 'listings', action: 'add', item });
@@ -477,7 +486,7 @@ export default function App() {
               type="button"
               onClick={() => navigateTo('team')}
               className={`py-2 transition-colors cursor-pointer whitespace-nowrap ${
-                activePage === 'team' ? 'text-white font-medium' : 'text-white/90 hover:text-white'
+                activePage === 'team' || activePage === 'team-profile' ? 'text-white font-medium' : 'text-white/90 hover:text-white'
               }`}
             >
               Team
@@ -1343,6 +1352,7 @@ export default function App() {
                   key={member.id}
                   className="team-card bg-transparent flex flex-col h-full overflow-hidden"
                 >
+                  <button type="button" onClick={() => openTeamMember(member.id)} aria-label={`View ${member.name}’s profile`} className="team-profile-link text-left flex-1 cursor-pointer">
                   <div className="relative min-h-[384px] w-full overflow-hidden bg-black">
                     <PropertyImage
                       src={member.photoUrl}
@@ -1350,7 +1360,7 @@ export default function App() {
                       className="w-full h-full object-cover object-top absolute inset-0"
                     />
                   </div>
-                  <div className="py-6 flex-1 flex flex-col justify-between">
+                  <div className="pt-6">
                     <div>
                       <h2 className="font-cormorant text-3xl font-light text-white mb-1">
                         {member.name}
@@ -1361,7 +1371,10 @@ export default function App() {
                       <p className="text-xs text-white/70 font-light leading-relaxed">
                         {member.bio}
                       </p>
+                      <span className="inline-flex items-center gap-2 text-xs text-white/80 mt-5">View profile <ArrowUpRight className="w-4 h-4" aria-hidden="true" /></span>
                     </div>
+                  </div>
+                  </button>
                     <div className="mt-6 pt-5 border-t border-white/10 flex items-center justify-between text-xs text-white">
                       <a
                         href={`mailto:${member.email}`}
@@ -1378,11 +1391,15 @@ export default function App() {
                         <span>{member.phone}</span>
                       </a>
                     </div>
-                  </div>
                 </div>
               ))}
             </div>
           </section>
+        )}
+
+        {activePage === 'team-profile' && selectedTeamMember && (
+          <TeamMemberProfile key={selectedTeamMember.id} member={selectedTeamMember} listings={listings}
+            onBack={() => navigateTo('team')} onSelectProperty={setSelectedProperty} />
         )}
 
         {/* =================================================================== */}

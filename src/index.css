@@ -216,6 +216,17 @@
 .gallery-thumbnail:hover { opacity: 1; }
 .property-dialog-panel :focus-visible { outline: 2px solid #c6c6c6; outline-offset: 3px; }
 
+.team-profile-link { display: block; width: 100%; }
+.team-profile-link:hover h2 { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px; }
+.agent-listing-filter { padding: 8px 16px; border-radius: 24px; font-size: 12px; color: #bcbcbc; cursor: pointer; transition: color 200ms, background-color 200ms; }
+.agent-listing-filter:hover { color: white; }
+.agent-listing-filter.is-selected { color: black; background: white; }
+.agent-contact-label { display: block; font-size: 13px; color: #dedede; }
+.agent-contact-input { display: block; width: 100%; min-width: 0; margin-top: 10px; padding: 12px 0; font: inherit; font-size: 16px; color: white; background: transparent; border: 0; border-bottom: 1px solid #ffffff35; border-radius: 0; }
+.agent-contact-input:focus { border-color: white; }
+.agent-profile textarea { resize: vertical; }
+.agent-profile .zenu-button-outline-light { height: auto; min-height: 44px; white-space: normal; line-height: 1.5; padding: 12px 22px; }
+
 @media (hover: hover) and (pointer: fine) {
   .public-site .property-card:hover,
   .public-site .editorial-card:hover,
