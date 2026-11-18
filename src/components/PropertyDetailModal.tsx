@@ -142,7 +142,8 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
         {/* Scrollable Content */}
         <div className="overflow-y-auto p-6 sm:p-8 space-y-8 bg-gradient-to-b from-[#302f2f] to-[#000000]">
           {/* Hero Visual */}
-          <div className="relative aspect-16/9 w-full bg-black overflow-hidden border border-[#c6c6c6]/30">
+          <div className="relative w-full bg-black overflow-hidden border border-[#c6c6c6]/30">
+            <div className="relative aspect-16/9 overflow-hidden">
             <PropertyImage
               key={gallery[imageIndex] || property.imageUrl}
               src={gallery[imageIndex] || property.imageUrl}
@@ -150,7 +151,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               fallbackLabel={property.title}
               className="gallery-image w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+            <div className="hidden sm:block absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
             {gallery.length > 1 && <>
               <span className="absolute top-4 right-4 bg-black/70 px-3 py-1 text-xs tabular-nums" role="status">Photo {imageIndex + 1} of {gallery.length}</span>
@@ -164,7 +165,9 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               </div>
             )}
 
-            <div className="absolute bottom-6 left-6 right-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4 text-white">
+            </div>
+
+            <div className="relative p-5 sm:p-0 sm:absolute sm:bottom-6 sm:left-6 sm:right-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4 text-white">
               <div>
                 <p className="text-sm uppercase tracking-widest text-white/80 font-inter mb-1">
                   {property.suburb}, {property.state} {property.postcode}
