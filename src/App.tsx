@@ -71,8 +71,7 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
-  // Home page listings minimise / expand state (shows 3 listings by default)
-  const [showAllHomeListings, setShowAllHomeListings] = useState(false);
+  // Six properties on the homepage; the directory contains the full collection.
 
   // Blog page selected article & category filter
   const [selectedBlogPostId, setSelectedBlogPostId] = useState<string | null>(null);
@@ -121,6 +120,7 @@ export default function App() {
     setActivePage(page);
     setMobileMenuOpen(false);
     setOpenDropdown(null);
+    setShowAdvancedHeroFilters(false);
     window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
     window.requestAnimationFrame(() => document.querySelector<HTMLElement>('.page-content')?.focus({ preventScroll: true }));
   };
@@ -257,8 +257,8 @@ export default function App() {
   ]);
 
   const homeDisplayedListings = useMemo(() => {
-    return showAllHomeListings ? filteredListings : filteredListings.slice(0, 3);
-  }, [filteredListings, showAllHomeListings]);
+    return filteredListings.slice(0, 6);
+  }, [filteredListings]);
 
   const commercialListings = useMemo(
     () => listings.filter((l) => l.category === 'Commercial' || l.id === '2997890'),
@@ -518,7 +518,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => navigateTo('list-with-us')}
-              className="hidden sm:inline-flex items-center justify-center px-5 h-9 rounded-full bg-white text-black font-inter text-xs font-medium hover:bg-neutral-200 transition-colors cursor-pointer whitespace-nowrap"
+              className="accent-button hidden sm:inline-flex items-center justify-center px-5 h-9 rounded-full bg-white text-black font-inter text-xs font-medium hover:bg-neutral-200 transition-colors cursor-pointer whitespace-nowrap"
             >
               Book an appraisal
             </button>
@@ -663,21 +663,18 @@ export default function App() {
                       navigateTo('listings', 'Sold');
                     }
                   }}
-                  className="property-search mt-12 bg-black/30 backdrop-blur-md text-white p-4 sm:p-5"
+                  className="property-search compact-search mt-10"
                 >
-                  <div className="flex flex-col lg:flex-row items-stretch gap-3">
+                  <div className="compact-search-row">
                     {/* Buy / Lease / Sold Segmented Selector */}
-                    <div className="flex bg-white/10 p-1 shrink-0">
+                    <div className="search-methods">
                       {(['Buy', 'Lease', 'Sold'] as const).map((method) => (
                         <button
                           key={method}
                           type="button"
                           onClick={() => setHeroSaleMethod(method)}
-                          className={`px-5 py-2 text-xs font-inter rounded-full transition-colors cursor-pointer ${
-                            heroSaleMethod === method
-                              ? 'bg-white text-black font-medium'
-                              : 'text-white/75 hover:text-white'
-                          }`}
+                          aria-pressed={heroSaleMethod === method}
+                          className={`search-method ${heroSaleMethod === method ? 'is-selected' : ''}`}
                         >
                           {method}
                         </button>
@@ -685,7 +682,7 @@ export default function App() {
                     </div>
 
                     {/* Search Input */}
-                    <div className="flex-1 min-w-0 flex items-center bg-white border border-[#d8d8d8] px-4 h-11 min-h-11">
+                    <div className="search-query">
                       <Search className="w-4 h-4 text-[#666666] mr-3 shrink-0" />
                       <input
                         type="text"
@@ -704,25 +701,28 @@ export default function App() {
                       onClick={() =>
                         setShowAdvancedHeroFilters(!showAdvancedHeroFilters)
                       }
-                      className="px-4 h-11 bg-white border border-[#d8d8d8] hover:border-[#202020] text-xs font-inter text-[#202020] flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                      className="search-filter-toggle"
+                      aria-label="Filters"
                     >
                       <SlidersHorizontal className="w-3.5 h-3.5" />
-                      <span>Filters</span>
+                      <span className="search-filter-label">Filters</span>
                     </button>
 
                     {/* Submit Button */}
                     <button
                       type="submit"
-                      className="px-8 h-11 rounded-full bg-[#000000] text-white hover:bg-[#302f2f] font-inter text-xs font-medium transition-colors cursor-pointer whitespace-nowrap"
+                      className="search-submit"
+                      aria-label="Search Properties"
                     >
-                      Search Properties
+                      <Search className="search-submit-icon w-4 h-4" aria-hidden="true" />
+                      <span className="search-submit-label">Search Properties</span>
                     </button>
                   </div>
 
                   <div className={`filter-expansion ${showAdvancedHeroFilters ? 'is-open' : ''}`} inert={!showAdvancedHeroFilters} aria-hidden={!showAdvancedHeroFilters}>
                     <div><div id="property-search-filters" className="mt-3 pt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
                       <div>
-                        <label className="block text-[11px] text-white/70 mb-1">
+                        <label className="block text-[11px] text-[#666666] mb-1">
                           Property Type
                         </label>
                         <select
@@ -739,7 +739,7 @@ export default function App() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-[11px] text-white/70 mb-1">
+                        <label className="block text-[11px] text-[#666666] mb-1">
                           Minimum Bedrooms
                         </label>
                         <select
@@ -754,7 +754,7 @@ export default function App() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-[11px] text-white/70 mb-1">
+                        <label className="block text-[11px] text-[#666666] mb-1">
                           Listing Agent
                         </label>
                         <select
@@ -776,7 +776,7 @@ export default function App() {
               </div>
             </section>
 
-            {/* 2. CURATED "Explore our properties" (3 LISTINGS BY DEFAULT WITH SHOW MORE) */}
+            {/* 2. CURATED "Explore our properties" (6 LISTINGS WITH A VIEW ALL LINK) */}
             <section className="home-listings bg-[#141414] text-white py-20 sm:py-28 px-6">
               <div className="max-w-[1200px] mx-auto space-y-10">
                 {/* Header & Category Filter Pills */}
@@ -804,9 +804,9 @@ export default function App() {
                         type="button"
                         onClick={() => {
                           setSelectedCategory(tab.value);
-                          setShowAllHomeListings(false);
                         }}
-                        className={`px-4 py-1.5 text-xs font-inter rounded-full border transition-colors cursor-pointer ${
+                        aria-pressed={selectedCategory === tab.value}
+                        className={`home-category-filter px-4 py-1.5 text-xs font-inter rounded-full border transition-colors cursor-pointer ${
                           selectedCategory === tab.value
                             ? 'bg-white text-black border-white font-medium'
                             : 'bg-transparent text-white/70 border-transparent hover:text-white'
@@ -818,7 +818,7 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 3-Column Architectural Grid (Minimised to 3 by default, expandable with Show More) */}
+                {/* 3-Column Architectural Grid (Six properties by default) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {homeDisplayedListings.map((property) => (
                     <PropertyCard key={property.id} property={property}
@@ -836,176 +836,67 @@ export default function App() {
                     Showing {homeDisplayedListings.length} of {filteredListings.length} properties.
                   </p>
                   <div className="flex flex-wrap items-center gap-3">
-                    {filteredListings.length > 3 && (
-                      <button
-                        type="button"
-                        onClick={() => setShowAllHomeListings(!showAllHomeListings)}
-                        className="zenu-button"
-                      >
-                        {showAllHomeListings
-                          ? 'Show fewer properties'
-                          : `Show ${filteredListings.length - 3} more properties`}
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => navigateTo('listings', 'ALL')}
-                      className="zenu-button-outline-light"
-                    >
-                      Browse all properties
+                    <button type="button" onClick={() => navigateTo('listings')} className="zenu-button inline-flex gap-2">
+                      View all properties <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
                     </button>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* 3. ARCHITECTURAL SPLIT-SHOWCASE: "People who know your neighbourhood." & "How we can help" */}
-            <section className="bg-[#141414] py-20 sm:py-28 px-6">
-              <div className="max-w-[1200px] mx-auto">
-                <div className="reveal-block grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-                  {/* Left 5 Columns: Proposition & How We Can Help Box */}
-                  <div className="lg:col-span-5 space-y-8">
-                    <div className="space-y-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-white/60">
-                        Applecross · Licence No. RA84388
-                      </p>
-                      <h2 className="font-cormorant text-3xl sm:text-4xl leading-tight font-medium text-white">
-                        People who know your neighbourhood.
-                      </h2>
-                      <p className="font-inter text-base text-white/80 font-light leading-relaxed">
-                        Meet the people behind your next move, at our office on Kintail Road.
-                      </p>
-                    </div>
-
-                    {/* Gradient-to-Black Framed Fieldset */}
-                    <fieldset className="service-panel min-w-0 pt-2">
-                      <legend className="pb-4 font-inter text-lg font-medium text-white">
-                        How we can help
-                      </legend>
-                      <p className="font-inter text-sm sm:text-base leading-relaxed font-light text-white/85">
-                        Residential and commercial sales are handled by our sales team, leasing and property management are overseen personally by Wendy Chia (Director &amp; Licensee, Licence No. RA84388), and select properties are also available off-market with details shared privately on request.
-                      </p>
-                      <div className="pt-2 mt-6 flex flex-wrap items-center gap-4">
-                        <a
-                          href="https://www.instagram.com/wendychiarealty/"
-                          target="_blank"
-                          rel="noreferrer"
-                          className="zenu-button"
-                        >
-                          Speak with Wendy
-                        </a>
-                        <button
-                          type="button"
-                          onClick={() => navigateTo('list-with-us')}
-                          className="zenu-button-outline-light"
-                        >
-                          Book an appraisal
-                        </button>
-                      </div>
-                    </fieldset>
+            {/* 3. Familiar faces, visible on the homepage. */}
+            <section className="home-team bg-[#141414] pb-20 sm:pb-28 px-6">
+              <div className="max-w-[1200px] mx-auto space-y-10">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                  <div className="max-w-2xl space-y-4">
+                    <p className="accent-label text-xs uppercase tracking-[0.2em]">Applecross · Licence No. RA84388</p>
+                    <h2 className="font-cormorant text-4xl sm:text-5xl text-white">People who know<br />your neighbourhood.</h2>
+                    <p className="text-sm sm:text-base text-white/70 font-light leading-relaxed">Meet the people behind your next move, at our office on Kintail Road.</p>
                   </div>
-
-                  {/* Right 7 Columns: Original Agency Banner Framed with Gradient Fade */}
-                  <button type="button" onClick={() => navigateTo('team')} aria-label="Meet the Exceptional Real Estate team" className="editorial-card text-left lg:col-span-7 relative overflow-hidden bg-black">
-                    <PropertyImage
-                      src={BRAND_ASSETS.teamBannerImage}
-                      alt="Exceptional Real Estate Applecross Office"
-                      className="w-full aspect-16/10 object-cover"
-                    />
-                    <div
-                      className="absolute inset-0 pointer-events-none"
-                      style={{
-                        background:
-                          'linear-gradient(180deg, transparent 55%, rgba(0,0,0,0.88) 100%)',
-                      }}
-                    />
-                    <div className="absolute bottom-5 left-6 right-6 flex items-end justify-between text-white">
-                      <div>
-                        <p className="font-cormorant text-2xl font-light">
-                          Exceptional Real Estate Applecross
-                        </p>
-                        <p className="text-xs text-white/70 font-inter">
-                          2/28 Kintail Road, Applecross WA 6153
-                        </p>
+                  <button type="button" onClick={() => navigateTo('team')} className="accent-link inline-flex items-center gap-2 text-sm cursor-pointer">Meet our full team <ArrowUpRight className="w-4 h-4" aria-hidden="true" /></button>
+                </div>
+                <div className="home-team-grid grid grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-8">
+                  {teamMembers.slice(0, 4).map((member) => (
+                    <button type="button" key={member.id} onClick={() => openTeamMember(member.id)} aria-label={`View ${member.name}’s profile`} className="home-team-person text-left cursor-pointer group">
+                      <div className="aspect-4/5 bg-black overflow-hidden">
+                        <PropertyImage src={member.photoUrl} alt={member.name} className="w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105" />
                       </div>
-                      <span className="card-action text-xs font-inter underline text-white/90"
-                      >
-                        Meet our team
-                      </span>
-                    </div>
-                  </button>
+                      <div className="pt-4">
+                        <h3 className="font-cormorant text-2xl sm:text-3xl">{member.name}</h3>
+                        <p className="text-xs text-white/60 mt-1">{member.role}</p>
+                        <span className="accent-link inline-flex items-center gap-2 text-xs mt-3">View profile <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" /></span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-4">
+                  <p className="text-sm text-white/65 leading-relaxed max-w-2xl">Residential and commercial sales, with leasing and property management overseen personally by Wendy Chia, Director &amp; Licensee.</p>
+                  <button type="button" onClick={() => navigateTo('list-with-us')} className="zenu-button-outline-light shrink-0">Book an appraisal</button>
                 </div>
               </div>
             </section>
 
-            {/* 4. COMMERCIAL PROPERTIES & LATEST NEWS DUAL SHOWCASE (Gradient-to-Black) */}
-            <section className="bg-[#141414] pb-24 sm:pb-32 pt-8 sm:pt-12 px-6">
-              <div className="max-w-[1200px] mx-auto space-y-20">
-                {/* Commercial Spotlight */}
-                <div className="reveal-block grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-center">
-                  <div className="lg:col-span-5 space-y-4">
-                    <p className="text-xs uppercase tracking-[0.2em] text-white/60">
-                      For your business
-                    </p>
-                    <h2 className="font-cormorant text-3xl sm:text-4xl font-medium text-white">
-                      Commercial property
-                    </h2>
-                    <p className="font-inter text-base text-white/80 font-light leading-relaxed">
-                      Sales and leasing across Perth&apos;s commercial precincts — including high-exposure Canning Highway suites in Applecross and Mount Pleasant.
-                    </p>
-                    <div className="pt-3">
-                      <button
-                        type="button"
-                        onClick={() => navigateTo('listings', 'Commercial')}
-                        className="zenu-button-outline-light"
-                      >
-                        Explore Commercial Listings
-                      </button>
+            {/* 4. Full-width commercial spotlight. */}
+            {commercialListings[0] && (
+              <section className="commercial-band relative isolate overflow-hidden" aria-labelledby="commercial-heading">
+                <PropertyImage src={commercialListings[0].imageUrl} alt={commercialListings[0].title} className="absolute inset-0 w-full h-full object-cover" />
+                <div className="commercial-band-scrim absolute inset-0" />
+                <div className="relative max-w-[1200px] mx-auto px-6 py-20 sm:py-28 min-h-[500px] flex flex-col justify-end">
+                  <div className="max-w-xl space-y-5">
+                    <p className="accent-label text-xs uppercase tracking-[0.22em]">For your business · Perth commercial</p>
+                    <h2 id="commercial-heading" className="font-cormorant text-5xl sm:text-6xl text-white">A place for your<br />next chapter.</h2>
+                    <p className="text-sm sm:text-base font-light text-white/80 leading-relaxed max-w-lg">Sales and leasing across Perth’s commercial precincts. Local knowledge, with a broader perspective.</p>
+                    <div className="flex flex-wrap gap-4 items-center pt-3">
+                      <button type="button" onClick={() => navigateTo('listings', 'Commercial')} className="zenu-button inline-flex gap-2">Explore commercial <ArrowUpRight className="w-4 h-4" aria-hidden="true" /></button>
+                      <button type="button" onClick={() => setSelectedProperty(commercialListings[0])} className="accent-link text-sm underline cursor-pointer">View {commercialListings[0].title}</button>
                     </div>
                   </div>
-
-                  <div className="lg:col-span-7">
-                    {commercialListings.slice(0, 1).map((prop) => (
-                      <button
-                        type="button"
-                        aria-label={`View ${prop.title}, ${prop.suburb}`}
-                        key={prop.id}
-                        onClick={() => setSelectedProperty(prop)}
-                        className="editorial-card w-full text-left group relative h-[360px] bg-black overflow-hidden cursor-pointer"
-                      >
-                        <PropertyImage
-                          src={prop.imageUrl}
-                          alt={prop.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <div
-                          className="absolute inset-0"
-                          style={{
-                            background:
-                              'linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.88) 100%)',
-                          }}
-                        />
-                        <div className="absolute bottom-6 left-6 right-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4 text-white">
-                          <div>
-                            <span className="text-xs uppercase tracking-widest text-white/70">
-                              {prop.suburb} · Commercial
-                            </span>
-                            <h3 className="font-inter text-2xl sm:text-3xl font-normal mt-1">
-                              {prop.title}
-                            </h3>
-                            <p className="font-inter text-sm text-white/85 mt-1">
-                              {prop.priceDisplay}
-                            </p>
-                          </div>
-                          <span className="zenu-button text-xs!">
-                            Inspect Property
-                          </span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
                 </div>
+              </section>
+            )}
 
+            <section className="bg-[#141414] py-20 sm:py-28 px-6">
+              <div className="max-w-[1200px] mx-auto">
                 {/* From our team Magazine Card */}
                 {latestBlogHighlight && (
                   <div className="space-y-6">

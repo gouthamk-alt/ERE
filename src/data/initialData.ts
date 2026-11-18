@@ -76,7 +76,7 @@ export interface ClientEnquiry {
 }
 
 export const BRAND_ASSETS = {
-  logoLightOnDark: 'https://images.zenu.com.au/6s1jma11lzt6uqwrysrab8dimoqchdzo.png',
+  logoLightOnDark: '/assets/logo-transparent.png',
   logoDarkOnLight: 'https://images.zenu.com.au/m4zdoht43j7tvjvtdr9yio5wr2ywg8ut.png',
   teamBannerImage: '/assets/team-banner.jpg',
   blogMay2026Image: '/assets/blog-may-2026.jpg',
