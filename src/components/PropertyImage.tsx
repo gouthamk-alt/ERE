@@ -25,7 +25,7 @@ export const PropertyImage: React.FC<PropertyImageProps> = ({
         <span className="font-cormorant text-lg tracking-wide text-white">
           {fallbackLabel}
         </span>
-        <span className="text-xs text-white/60 mt-1 font-montserrat">
+        <span className="text-xs text-white/60 mt-1 font-inter">
           2/28 Kintail Road, Applecross 6153
         </span>
       </div>

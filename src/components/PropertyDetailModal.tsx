@@ -87,7 +87,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
       <div className="relative w-full max-w-[1100px] bg-[#000000] text-white border border-[#c6c6c6]/40 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
         {/* Top Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-[#000000] border-b border-[#302f2f] shrink-0">
-          <div className="flex items-center gap-3 text-xs text-white/70 font-montserrat">
+          <div className="flex items-center gap-3 text-xs text-white/70 font-inter">
             <span className="text-white font-medium">{property.category}</span>
             <span aria-hidden="true">·</span>
             <span>{property.status}</span>
@@ -120,14 +120,14 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
             {property.badgeText && (
-              <div className="absolute top-4 left-4 bg-black/85 text-white text-xs font-montserrat px-3 py-1 border border-white/20">
+              <div className="absolute top-4 left-4 bg-black/85 text-white text-xs font-inter px-3 py-1 border border-white/20">
                 {property.badgeText}
               </div>
             )}
 
             <div className="absolute bottom-6 left-6 right-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4 text-white">
               <div>
-                <p className="text-sm uppercase tracking-widest text-white/80 font-montserrat mb-1">
+                <p className="text-sm uppercase tracking-widest text-white/80 font-inter mb-1">
                   {property.suburb}, {property.state} {property.postcode}
                 </p>
                 <h2
@@ -136,13 +136,13 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                 >
                   {property.title}
                 </h2>
-                <p className="text-sm text-white/80 mt-1 flex items-center gap-1.5 font-montserrat">
+                <p className="text-sm text-white/80 mt-1 flex items-center gap-1.5 font-inter">
                   <MapPin className="w-4 h-4 text-white shrink-0" />
                   {property.address}
                 </p>
               </div>
               <div className="sm:text-right">
-                <p className="text-xs text-white/70 font-montserrat">Price Guide</p>
+                <p className="text-xs text-white/70 font-inter">Price Guide</p>
                 <p className="font-cormorant text-2xl sm:text-4xl font-normal text-white tabular-nums">
                   {property.priceDisplay}
                 </p>
@@ -153,32 +153,32 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           {/* Key Specifications Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-6 py-5 px-6 bg-[#000000] border border-[#c6c6c6]/30">
             <div>
-              <p className="text-xs text-white/60 font-montserrat">Bedrooms</p>
-              <p className="text-lg font-medium text-white tabular-nums mt-0.5 font-montserrat">
+              <p className="text-xs text-white/60 font-inter">Bedrooms</p>
+              <p className="text-lg font-medium text-white tabular-nums mt-0.5 font-inter">
                 {property.bedrooms > 0 ? `${property.bedrooms} Bed` : 'Commercial'}
               </p>
             </div>
             <div>
-              <p className="text-xs text-white/60 font-montserrat">Bathrooms</p>
-              <p className="text-lg font-medium text-white tabular-nums mt-0.5 font-montserrat">
+              <p className="text-xs text-white/60 font-inter">Bathrooms</p>
+              <p className="text-lg font-medium text-white tabular-nums mt-0.5 font-inter">
                 {property.bathrooms} Bath
               </p>
             </div>
             <div>
-              <p className="text-xs text-white/60 font-montserrat">Car Parking</p>
-              <p className="text-lg font-medium text-white tabular-nums mt-0.5 font-montserrat">
+              <p className="text-xs text-white/60 font-inter">Car Parking</p>
+              <p className="text-lg font-medium text-white tabular-nums mt-0.5 font-inter">
                 {property.carSpaces} Car
               </p>
             </div>
             <div>
-              <p className="text-xs text-white/60 font-montserrat">Land Area</p>
-              <p className="text-lg font-medium text-white tabular-nums mt-0.5 font-montserrat">
+              <p className="text-xs text-white/60 font-inter">Land Area</p>
+              <p className="text-lg font-medium text-white tabular-nums mt-0.5 font-inter">
                 {property.landSizeSqm.toLocaleString()} sqm
               </p>
             </div>
             <div>
-              <p className="text-xs text-white/60 font-montserrat">Building Area</p>
-              <p className="text-lg font-medium text-white tabular-nums mt-0.5 font-montserrat">
+              <p className="text-xs text-white/60 font-inter">Building Area</p>
+              <p className="text-lg font-medium text-white tabular-nums mt-0.5 font-inter">
                 {property.buildingAreaSqm.toLocaleString()} sqm
               </p>
             </div>
@@ -192,20 +192,20 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                 <h3 className="font-cormorant text-2xl sm:text-3xl font-light text-white leading-snug">
                   {property.headline}
                 </h3>
-                <p className="text-white/85 text-base leading-relaxed mt-4 font-montserrat font-light">
+                <p className="text-white/85 text-base leading-relaxed mt-4 font-inter font-light">
                   {property.description}
                 </p>
               </div>
 
               <div className="pt-6 border-t border-[#302f2f]">
-                <h4 className="text-sm font-medium text-white mb-4 font-montserrat uppercase tracking-wider">
+                <h4 className="text-sm font-medium text-white mb-4 font-inter uppercase tracking-wider">
                   Property Highlights
                 </h4>
                 <ul className="space-y-2.5">
                   {property.features.map((feat, index) => (
                     <li
                       key={index}
-                      className="flex items-start gap-3 text-sm text-white/85 font-montserrat font-light"
+                      className="flex items-start gap-3 text-sm text-white/85 font-inter font-light"
                     >
                       <span className="tabular-nums text-xs text-white/60 mt-0.5">
                         0{index + 1}.
@@ -216,7 +216,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                 </ul>
               </div>
 
-              <div className="pt-6 border-t border-[#302f2f] flex flex-wrap items-center justify-between gap-4 text-xs text-white/70 font-montserrat">
+              <div className="pt-6 border-t border-[#302f2f] flex flex-wrap items-center justify-between gap-4 text-xs text-white/70 font-inter">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-white" />
                   <span>Inspection:</span>
@@ -234,7 +234,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             <div className="lg:col-span-5 space-y-6">
               {/* Listing Agents Card */}
               <div className="bg-[#000000] border border-[#c6c6c6] p-6 space-y-4">
-                <p className="text-xs text-white/60 uppercase tracking-wider font-montserrat">
+                <p className="text-xs text-white/60 uppercase tracking-wider font-inter">
                   Listing Agents
                 </p>
                 <div className="space-y-4">
@@ -255,7 +255,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                           <p className="text-base font-medium text-white font-cormorant">
                             {agent!.name}
                           </p>
-                          <p className="text-xs text-white/70 font-montserrat">
+                          <p className="text-xs text-white/70 font-inter">
                             {agent!.role}
                           </p>
                           <a
@@ -281,10 +281,10 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
 
               {/* Enquiry Form */}
               <div className="bg-white text-black border border-[#c6c6c6] p-6">
-                <h4 className="font-roboto text-xl font-medium text-black">
+                <h4 className="font-inter text-xl font-medium text-black">
                   Enquire About This Property
                 </h4>
-                <p className="text-xs text-neutral-600 mt-1 font-montserrat">
+                <p className="text-xs text-neutral-600 mt-1 font-inter">
                   Direct message to {leadAgent.name} at Exceptional Real Estate.
                 </p>
 
@@ -294,7 +294,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                       <Check className="w-4 h-4" />
                       <span>Enquiry Sent</span>
                     </div>
-                    <p className="text-xs text-neutral-700 leading-relaxed font-montserrat">
+                    <p className="text-xs text-neutral-700 leading-relaxed font-inter">
                       Thank you, {clientName}. Your enquiry for{' '}
                       <span className="font-semibold">{property.title}</span> has been logged.
                     </p>
@@ -372,7 +372,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
                         placeholder="Message or preferred inspection time"
-                        className="w-full p-3 font-poppins text-sm text-[#363636] bg-[#ededed] border border-[#f7f9fa] rounded-[2px] focus:outline-1 focus:outline-black focus:bg-white"
+                        className="w-full p-3 font-inter text-sm text-[#363636] bg-[#ededed] border border-[#f7f9fa] rounded-[2px] focus:outline-1 focus:outline-black focus:bg-white"
                       />
                     </div>
 

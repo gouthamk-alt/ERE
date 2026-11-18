@@ -40,6 +40,7 @@ interface AdminDashboardProps {
   onResetDemoData: () => void;
   onPreviewProperty: (property: PropertyListing) => void;
   onExitAdmin: () => void;
+  onLogout: () => Promise<void>;
 }
 
 const PRESET_IMAGES = [
@@ -123,6 +124,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onResetDemoData,
   onPreviewProperty,
   onExitAdmin,
+  onLogout,
 }) => {
   const [activeSection, setActiveSection] = useState<
     'inventory' | 'editor' | 'blogs' | 'blog-editor' | 'enquiries' | 'agents'
@@ -292,7 +294,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const unreadEnquiriesCount = enquiries.filter((e) => e.status === 'New').length;
 
   return (
-    <div className="min-h-screen bg-[#302f2f] text-white flex flex-col lg:flex-row font-montserrat">
+    <div className="min-h-screen bg-[#302f2f] text-white flex flex-col lg:flex-row font-inter">
       {/* Left Sidebar Navigation (#000000 Section Background) */}
       <aside className="w-full lg:w-64 bg-[#000000] text-white shrink-0 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-[#c6c6c6]/25">
         <div className="p-6">
@@ -412,6 +414,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             Back to Website
             <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
+          <button type="button" onClick={onLogout} className="w-full text-sm text-white/70 hover:text-white py-3 cursor-pointer">
+            Sign out
           </button>
         </div>
       </aside>
@@ -683,7 +688,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="max-w-4xl mx-auto bg-white text-black border border-[#c6c6c6] p-6 sm:p-8">
               <div className="flex items-center justify-between pb-6 border-b border-neutral-200">
                 <div>
-                  <h3 className="font-roboto text-2xl font-medium text-black">
+                  <h3 className="font-inter text-2xl font-medium text-black">
                     {editingListingId
                       ? `Edit Listing — ${listingForm.title}`
                       : 'Add New Property Listing'}
@@ -960,7 +965,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       onChange={(e) =>
                         setListingForm({ ...listingForm, description: e.target.value })
                       }
-                      className="w-full p-3 font-poppins text-sm text-[#363636] bg-[#ededed] border border-[#f7f9fa]"
+                      className="w-full p-3 font-inter text-sm text-[#363636] bg-[#ededed] border border-[#f7f9fa]"
                     />
                   </div>
                   <div>
@@ -971,7 +976,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       rows={3}
                       value={featuresText}
                       onChange={(e) => setFeaturesText(e.target.value)}
-                      className="w-full p-3 font-poppins text-sm text-[#363636] bg-[#ededed] border border-[#f7f9fa]"
+                      className="w-full p-3 font-inter text-sm text-[#363636] bg-[#ededed] border border-[#f7f9fa]"
                     />
                   </div>
                 </div>
@@ -1103,7 +1108,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="max-w-4xl mx-auto bg-white text-black border border-[#c6c6c6] p-6 sm:p-8">
               <div className="flex items-center justify-between pb-6 border-b border-neutral-200">
                 <div>
-                  <h3 className="font-roboto text-2xl font-medium text-black">
+                  <h3 className="font-inter text-2xl font-medium text-black">
                     {editingBlogId
                       ? `Edit Blog Article — ${blogForm.title}`
                       : 'Publish New Blog Article'}
@@ -1247,7 +1252,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       setBlogForm({ ...blogForm, excerpt: e.target.value })
                     }
                     placeholder="Brief summary of the article..."
-                    className="w-full p-3 font-poppins text-sm text-[#363636] bg-[#ededed] border border-[#f7f9fa]"
+                    className="w-full p-3 font-inter text-sm text-[#363636] bg-[#ededed] border border-[#f7f9fa]"
                   />
                 </div>
 
@@ -1260,7 +1265,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     value={blogContentText}
                     onChange={(e) => setBlogContentText(e.target.value)}
                     placeholder="Write full article paragraphs here..."
-                    className="w-full p-3 font-poppins text-sm text-[#363636] bg-[#ededed] border border-[#f7f9fa]"
+                    className="w-full p-3 font-inter text-sm text-[#363636] bg-[#ededed] border border-[#f7f9fa]"
                   />
                 </div>
 

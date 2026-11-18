@@ -7,22 +7,16 @@
     --section-width: 1200px;
     --text-editor-bg: #302f2f;
     --font-cormorant: 'Cormorant', Georgia, serif;
-    --font-montserrat: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-roboto: 'Roboto', sans-serif;
     --font-inter: 'Inter', sans-serif;
-    --font-poppins: 'Poppins', sans-serif;
-    --font-manrope: 'Manrope', sans-serif;
   }
 
   body {
-    font-family: var(--font-montserrat);
-    background-color: #000000;
-    background-image: linear-gradient(180deg, #302f2f 0%, #141414 45%, #000000 100%);
-    background-attachment: fixed;
+    font-family: var(--font-inter);
+    background-color: #141414;
     color: #ffffff;
     font-size: 17px;
     line-height: 25.5px;
-    font-weight: 300;
+    font-weight: 400;
     overflow-x: hidden;
   }
 }
@@ -31,24 +25,8 @@
   font-family: var(--font-cormorant);
 }
 
-.font-montserrat {
-  font-family: var(--font-montserrat);
-}
-
-.font-roboto {
-  font-family: var(--font-roboto);
-}
-
 .font-inter {
   font-family: var(--font-inter);
-}
-
-.font-poppins {
-  font-family: var(--font-poppins);
-}
-
-.font-manrope {
-  font-family: var(--font-manrope);
 }
 
 .section-container {
@@ -58,19 +36,19 @@
 }
 
 .bg-gradient-to-black {
-  background: linear-gradient(180deg, #302f2f 0%, #161616 55%, #000000 100%);
+  background: #202020;
 }
 
 .bg-gradient-from-black {
-  background: linear-gradient(180deg, #000000 0%, #1c1b1b 60%, #302f2f 100%);
+  background: #141414;
 }
 
 .bg-radial-dark-to-black {
-  background: radial-gradient(circle at 50% 0%, #3a3939 0%, #181818 55%, #000000 100%);
+  background: #202020;
 }
 
 .card-gradient-to-black {
-  background: linear-gradient(165deg, rgba(48, 47, 47, 0.75) 0%, rgba(15, 15, 15, 0.92) 55%, #000000 100%);
+  background: #202020;
 }
 
 .zenu-button {
@@ -85,8 +63,8 @@
   font-size: 14px;
   font-weight: 400;
   border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 50px;
-  background: linear-gradient(180deg, #262525 0%, #000000 100%);
+  border-radius: 3px;
+  background: #000000;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease-in-out;
@@ -108,10 +86,10 @@
   font-family: var(--font-inter);
   color: #ffffff;
   font-size: 14px;
-  font-weight: 300;
+  font-weight: 400;
   border: 1px solid rgba(255, 255, 255, 0.65);
-  border-radius: 50px;
-  background-color: rgba(0, 0, 0, 0.65);
+  border-radius: 3px;
+  background-color: transparent;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease-in-out;
@@ -126,7 +104,7 @@
 .zenu-input {
   padding: 0 15px;
   height: 42px;
-  font-family: var(--font-poppins);
+  font-family: var(--font-inter);
   font-size: 14px;
   font-weight: 400;
   color: #363636;
@@ -142,6 +120,38 @@
 
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+.public-site h1, .public-site h2 { font-weight: 400; letter-spacing: -0.025em; }
+.public-site h2 { line-height: 1.12; }
+.public-site button, .public-site a { text-underline-offset: 4px; }
+.public-site :focus-visible { outline: 2px solid #a8a8a8; outline-offset: 4px; }
+.property-search { border-radius: 3px; }
+.property-search input { min-width: 0; }
+.property-search button { border-radius: 3px; }
+.home-listings .zenu-button { background: #000000; border-color: #000000; color: white; }
+.home-listings .zenu-button:hover { background: #302f2f; }
+.home-listings .zenu-button-outline-light { border-color: #a2a2a2; color: #202020; }
+.home-listings .zenu-button-outline-light:hover { background: #e6e6e6; }
+.property-card { color: #202020; background: #fff; min-width: 0; }
+.property-card-link { width: 100%; height: 100%; text-align: left; cursor: pointer; display: flex; flex-direction: column; }
+.property-card-image { position: relative; aspect-ratio: 4 / 3; width: 100%; overflow: hidden; background: #e2e2e2; }
+.property-card-image img { transition: transform 300ms ease; }
+.property-card-link:hover img { transform: scale(1.025); }
+.property-card-badge { position: absolute; top: 16px; left: 16px; padding: 5px 10px; background: #fff; color: #000000; font-size: 11px; font-weight: 500; }
+.property-card-body { padding: 24px; width: 100%; flex: 1; display: flex; flex-direction: column; }
+.property-card-suburb { color: #666666; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.5; }
+.property-card h3 { font-family: var(--font-cormorant); font-size: 29px; font-weight: 500; line-height: 1.15; margin: 8px 0 12px; }
+.property-card-price { font-size: 14px; font-weight: 500; margin-bottom: 20px; }
+.property-card-specs { display: flex; gap: 22px; font-size: 13px; padding-bottom: 20px; }
+.property-card-specs > span { display: inline-flex; gap: 8px; align-items: center; }
+.property-card-specs svg { width: 16px; height: 16px; color: #686868; stroke-width: 1.5; }
+.property-card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e0e0e0; padding-top: 15px; margin-top: auto; color: #606060; font-size: 11px; }
+.property-card-footer svg { width: 18px; height: 18px; }
+
+@media (max-width: 767px) {
+  .property-search { margin-top: 32px; }
+  .property-card-body { padding: 20px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
