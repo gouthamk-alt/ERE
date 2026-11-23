@@ -20,6 +20,8 @@ In Newsletters, save a draft and select **Use for new subscribers** to approve a
 
 ## Production setup still required
 
+Netlify Functions requires NODE_OPTIONS=--experimental-require-module in its environment, including Functions scope, for sanitize-html 2.18.2 and its ESM parser dependency. AWS Lambda disables this Node compatibility feature by default. Keep the patched sanitizer version; do not downgrade to older vulnerable releases. A redeploy is required after configuring the variable.
+
 Enquiry notifications use the pending Microsoft 365 connection described in MICROSOFT-EMAIL-SETUP.md. Newsletter campaigns use a separate client-owned Resend connection, not the sales mailbox password. Configure server-only production settings from .env.example:
 
 - RESEND_API_KEY and NEWSLETTER_FROM on a verified sender domain.
