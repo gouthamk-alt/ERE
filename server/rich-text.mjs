@@ -1,4 +1,4 @@
-import sanitizeHtml from 'sanitize-html';
+import sanitizeHtml from './generated/sanitize-html.mjs';
 
 export function cleanRichText(value) {
   if (typeof value !== 'string' || value.length > 100000) throw new Error('Keep formatted content below 100,000 characters.');

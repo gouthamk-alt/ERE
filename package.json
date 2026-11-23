@@ -4,6 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/build-server-deps.mjs",
+    "prestart": "node scripts/build-server-deps.mjs",
+    "pretest": "node scripts/build-server-deps.mjs",
+    "prebuild": "node scripts/build-server-deps.mjs",
     "dev": "node server/index.mjs",
     "start": "node --env-file-if-exists=.env.production server/production.mjs",
     "test": "node --test server/auth.test.mjs server/content.test.mjs server/presentation.test.mjs server/enquiries.test.mjs server/microsoft-email.test.mjs server/admin-features.test.mjs",
