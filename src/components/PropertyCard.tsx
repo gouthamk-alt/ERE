@@ -1,3 +1,4 @@
+import { displayPropertyPrice } from '../propertyPresentation';
 import { ArrowUpRight, Bath, Bed, Car } from 'lucide-react';
 import { PropertyListing } from '../data/initialData';
 import { PropertyImage } from './PropertyImage';
@@ -17,7 +18,7 @@ export function PropertyCard({ property, agentName, onSelect }: {
         <div className="property-card-body">
           <p className="property-card-suburb">{property.suburb}, {property.state} {property.postcode}</p>
           <h3>{property.title}</h3>
-          <p className="property-card-price">{property.priceDisplay}</p>
+          <p className="property-card-price">{displayPropertyPrice(property)}</p>
           <div className="property-card-specs">
             {property.bedrooms > 0 && <span><Bed aria-hidden="true" /><span>{property.bedrooms} <span className="sr-only">bedrooms</span></span></span>}
             <span><Bath aria-hidden="true" /><span>{property.bathrooms} <span className="sr-only">bathrooms</span></span></span>

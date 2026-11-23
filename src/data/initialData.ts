@@ -59,6 +59,7 @@ export interface BlogPost {
   excerpt: string;
   content: string[];
   featured?: boolean;
+  bodyHtml?: string;
 }
 
 export interface ClientEnquiry {

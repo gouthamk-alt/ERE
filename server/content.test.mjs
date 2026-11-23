@@ -40,7 +40,7 @@ test('public content is shared across cold instances and does not expose enquiri
   const response = await read();
   assert.equal(response.headers.get('cache-control'), 'no-store');
   const first = await response.json();
-  assert.deepEqual(Object.keys(first).sort(), ['blogPosts', 'listings', 'revision']);
+  assert.deepEqual(Object.keys(first).sort(), ['blogPosts', 'listings', 'revision', 'teamMembers']);
   const { read: secondRead } = await setup(store);
   assert.deepEqual(await (await secondRead()).json(), first);
 });

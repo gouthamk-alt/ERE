@@ -24,6 +24,12 @@ import {
   BRAND_ASSETS,
 } from '../data/initialData';
 import { PropertyImage } from './PropertyImage';
+import { MicrosoftEmailSettings } from './MicrosoftEmailSettings';
+import { TeamAdmin } from './TeamAdmin';
+import { RichTextEditor, paragraphsHtml } from './RichTextEditor';
+import { MediaLibrary } from './MediaLibrary';
+import { ContactsAdmin } from './ContactsAdmin';
+import { NewslettersAdmin } from './NewslettersAdmin';
 import { downloadBrowserBackup, type LegacyContent } from '../legacyContent';
 
 interface AdminDashboardProps {
@@ -37,6 +43,8 @@ interface AdminDashboardProps {
   onAddBlogPost: (post: BlogPost) => Promise<boolean>;
   onUpdateBlogPost: (post: BlogPost) => Promise<boolean>;
   onDeleteBlogPost: (id: string) => Promise<boolean>;
+  onSaveTeamMember: (member: TeamMember, existing: boolean) => Promise<boolean>;
+  onDeleteTeamMember: (id: string) => Promise<boolean>;
   onUpdateEnquiryStatus: (id: string, status: ClientEnquiry['status']) => void;
   onRefreshContent: () => Promise<boolean>;
   contentReady: boolean;
@@ -126,6 +134,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onAddBlogPost,
   onUpdateBlogPost,
   onDeleteBlogPost,
+  onSaveTeamMember,
+  onDeleteTeamMember,
   onUpdateEnquiryStatus,
   onRefreshContent,
   contentReady,
@@ -138,8 +148,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onLogout,
 }) => {
   const [activeSection, setActiveSection] = useState<
-    'inventory' | 'editor' | 'blogs' | 'blog-editor' | 'enquiries' | 'agents'
-  >('inventory');
+    'inventory' | 'editor' | 'blogs' | 'blog-editor' | 'enquiries' | 'agents' | 'email' | 'media' | 'contacts' | 'newsletters'
+  >(new URLSearchParams(window.location.search).has('email') ? 'email' : 'inventory');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
 
@@ -153,6 +163,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
   const [blogForm, setBlogForm] = useState<Omit<BlogPost, 'id'>>(EMPTY_BLOG_FORM);
   const [blogContentText, setBlogContentText] = useState('');
+  const [blogMedia, setBlogMedia] = useState(false);
   const [confirmDeleteBlogId, setConfirmDeleteBlogId] = useState<string | null>(null);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -251,7 +262,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setEditingBlogId(post.id);
     const { id, ...rest } = post;
     setBlogForm(rest);
-    setBlogContentText(post.content.join('\n\n'));
+    setBlogContentText(post.bodyHtml || paragraphsHtml(post.content));
     setActiveSection('blog-editor');
   };
 
@@ -262,15 +273,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       return;
     }
 
-    const paragraphs = blogContentText
-      .split(/\n\s*\n/)
-      .map((p) => p.trim())
-      .filter(Boolean);
+    const parsed = new DOMParser().parseFromString(blogContentText, 'text/html');
+    const paragraphs = (parsed.body.textContent || blogForm.excerpt).match(/[\s\S]{1,19000}/g) || [blogForm.excerpt];
 
     if (editingBlogId) {
       const updatedPost: BlogPost = {
         id: editingBlogId,
         ...blogForm,
+        bodyHtml: blogContentText,
         content: paragraphs.length > 0 ? paragraphs : [blogForm.excerpt],
       };
       if (!await onUpdateBlogPost(updatedPost)) return;
@@ -279,6 +289,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       const newPost: BlogPost = {
         id: crypto.randomUUID(),
         ...blogForm,
+        bodyHtml: blogContentText,
         content: paragraphs.length > 0 ? paragraphs : [blogForm.excerpt],
       };
       if (!await onAddBlogPost(newPost)) return;
@@ -316,7 +327,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       </section>}
       <div className="bg-black text-white border-b border-white/20 px-6 py-3 text-sm" role={contentError ? 'alert' : 'status'}>
-        {contentError || (saving ? 'Saving to the live website…' : contentReady ? 'Connected to shared website content. Saved edits are published immediately.' : 'Loading shared website content…')}
+        {contentError || (saving ? 'Saving website content…' : contentReady ? ['localhost','127.0.0.1'].includes(window.location.hostname) ? 'Local preview. Saves affect this computer only; nothing is deployed.' : 'Connected to shared website content. Saved edits are published immediately.' : 'Loading shared website content…')}
         {contentError && <button type="button" disabled={saving} onClick={() => void onRefreshContent()} className="underline ml-3">Reload latest content</button>}
       </div>
       <fieldset disabled={saving || !contentReady} className="min-w-0 border-0 p-0 m-0 min-h-screen bg-[#302f2f] text-white flex flex-col lg:flex-row font-inter">
@@ -416,6 +427,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </span>
               <span className="tabular-nums">{teamMembers.length}</span>
             </button>
+            <button type="button" onClick={() => setActiveSection('email')}
+              className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-xs rounded-full border transition-colors ${activeSection === 'email' ? 'bg-white text-black border-white' : 'text-white/80 border-transparent hover:border-white/40'}`}>
+              <Inbox className="w-4 h-4" /> Email notifications
+            </button>
+            {(['media','contacts','newsletters'] as const).map(section=><button key={section} type="button" onClick={()=>setActiveSection(section)} className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-xs rounded-full border ${activeSection===section?'bg-white text-black border-white':'text-white/80 border-transparent hover:border-white/40'}`}><FileText className="w-4 h-4"/>{section==='media'?'Media & fonts':section==='contacts'?'Contacts & CSV':'Newsletters'}</button>)}
           </nav>
         </div>
 
@@ -460,6 +476,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {activeSection === 'blog-editor' &&
                 (editingBlogId ? `Editing Article: ${blogForm.title}` : 'Create New Blog Article')}
               {activeSection === 'enquiries' && 'Submitted Appraisals & Enquiries'}
+              {activeSection === 'email' && 'Microsoft 365 Email Notifications'}
+              {activeSection === 'media' && 'Media & Fonts'}
+              {activeSection === 'contacts' && 'Private Contacts'}
+              {activeSection === 'newsletters' && 'Newsletters & Campaigns'}
               {activeSection === 'agents' && 'Team Directory'}
             </span>
           </div>
@@ -1282,15 +1302,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 <div>
                   <label className="block text-xs font-medium text-black mb-1">
-                    Full Article Body (Separate paragraphs with a blank line)
+                    Full article body
                   </label>
-                  <textarea
-                    rows={6}
-                    value={blogContentText}
-                    onChange={(e) => setBlogContentText(e.target.value)}
-                    placeholder="Write full article paragraphs here..."
-                    className="w-full p-3 font-inter text-sm text-[#363636] bg-[#ededed] border border-[#f7f9fa]"
-                  />
+                  <RichTextEditor value={blogContentText} onChange={html=>setBlogContentText(html)} label="Blog editor" />
+                  <div className="mt-5"><button type="button" className="admin-action" onClick={()=>setBlogMedia(!blogMedia)}>Upload / choose cover image</button>{blogMedia&&<MediaLibrary imagesOnly onSelect={url=>{setBlogForm({...blogForm,imageUrl:url});setBlogMedia(false);}}/>}</div>
                 </div>
 
                 <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200">
@@ -1371,36 +1386,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* =============================================================== */}
           {/* SECTION 6: TEAM                                                 */}
           {/* =============================================================== */}
-          {activeSection === 'agents' && (
-            <div className="max-w-[1200px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {teamMembers.map((member) => (
-                <div
-                  key={member.id}
-                  className="bg-[#000000] border border-[#c6c6c6] overflow-hidden flex flex-col"
-                >
-                  <div className="h-64 w-full bg-[#302f2f] overflow-hidden">
-                    <PropertyImage
-                      src={member.photoUrl}
-                      alt={member.name}
-                      className="w-full h-full object-cover object-top"
-                    />
-                  </div>
-                  <div className="p-5 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h4 className="font-cormorant text-2xl text-white">
-                        {member.name}
-                      </h4>
-                      <p className="text-xs text-white/70 mt-1">{member.role}</p>
-                    </div>
-                    <div className="pt-4 mt-4 border-t border-[#302f2f] flex items-center justify-between text-xs text-white/80">
-                      <span>{member.email}</span>
-                      <span className="tabular-nums">{member.phone}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          {activeSection === 'agents' && <TeamAdmin members={teamMembers} onSave={onSaveTeamMember} onDelete={onDeleteTeamMember} />}
+          {activeSection === 'email' && <MicrosoftEmailSettings />}
+          {activeSection === 'media' && <MediaLibrary />}
+          {activeSection === 'contacts' && <ContactsAdmin />}
+          {activeSection === 'newsletters' && <NewslettersAdmin />}
         </main>
       </div>
       </fieldset>

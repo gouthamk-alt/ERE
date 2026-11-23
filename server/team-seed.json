@@ -1,0 +1,165 @@
+[
+  {
+    "id": "agent-tony-cai",
+    "name": "Tony Cai",
+    "role": "Director & Partners",
+    "qualification": "Building & Development Advisory Partner",
+    "phone": "0403 575 113",
+    "email": "tony@gchwa.com.au",
+    "photoUrl": "https://images.zenu.com.au/ig4j4lm3400mibg4b70n15vgvalos0x9.png",
+    "languages": [
+      "English",
+      "Mandarin"
+    ],
+    "specialties": [
+      "Development Sites",
+      "Construction & Feasibility",
+      "Project Marketing"
+    ],
+    "bio": "Bringing over 15 years of leadership in the Western Australian building and development industry, Tony Cai offers strategic insight into construction feasibility, subdivision potential, and market opportunities.",
+    "activeListingsCount": 6,
+    "soldCount12Months": 14,
+    "initials": "TC"
+  },
+  {
+    "id": "agent-wendy-chia",
+    "name": "Wendy Chia",
+    "role": "Director & Licensee",
+    "qualification": "Licensed Real Estate Agent (Licence No. RA84388)",
+    "phone": "0403 575 113",
+    "email": "wendy@exceptionalrealestate.com.au",
+    "photoUrl": "https://images.zenu.com.au/7sn4afuztobwye7hwa4d4k4xx1kvy9j4.png",
+    "languages": [
+      "English",
+      "Mandarin",
+      "Cantonese",
+      "Hokkien"
+    ],
+    "specialties": [
+      "Leasing & Property Management",
+      "Residential & Commercial Sales",
+      "Off-Market Advisory"
+    ],
+    "bio": "Leasing and property management are overseen personally by Wendy Chia (Director & Licensee, Licence No. RA84388), alongside residential and commercial sales across Applecross and Greater Perth.",
+    "activeListingsCount": 13,
+    "soldCount12Months": 21,
+    "initials": "WC"
+  },
+  {
+    "id": "agent-calvin-liew",
+    "name": "Calvin Liew",
+    "role": "Sales & Marketing Manager",
+    "qualification": "Senior Sales & Marketing Specialist",
+    "phone": "0426 560 488",
+    "email": "calvin@exceptionalrealestate.com.au",
+    "photoUrl": "https://images.zenu.com.au/c386ta2hacjnkbzleh2a5xyd9hh8fac5.png",
+    "languages": [
+      "English",
+      "Mandarin",
+      "Cantonese",
+      "Malay"
+    ],
+    "specialties": [
+      "Strategic Campaign Marketing",
+      "Property Videography",
+      "Residential Negotiation"
+    ],
+    "bio": "Calvin Liew leads sales and campaign marketing at Exceptional Real Estate, combining high-impact property videography, digital positioning, and disciplined negotiation.",
+    "activeListingsCount": 12,
+    "soldCount12Months": 19,
+    "initials": "CL"
+  },
+  {
+    "id": "agent-bee-khaw",
+    "name": "Bee Khaw",
+    "role": "Sales Executive",
+    "qualification": "Residential & Commercial Consultant",
+    "phone": "0402 571 863",
+    "email": "bee@exceptionalrealestate.com.au",
+    "photoUrl": "https://images.zenu.com.au/csrh4j6bigwl03lv3d5ztu34ofbbjw48.png",
+    "languages": [
+      "English",
+      "Mandarin",
+      "Hokkien",
+      "Malay"
+    ],
+    "specialties": [
+      "Residential Sales",
+      "Commercial Property",
+      "Client Relationship Management"
+    ],
+    "bio": "Specializing in residential and commercial properties across Perth, Bee Khaw is known for her honest and transparent approach, with a strong base of repeat and referral clients.",
+    "activeListingsCount": 5,
+    "soldCount12Months": 11,
+    "initials": "BK"
+  },
+  {
+    "id": "agent-jacky-chan",
+    "name": "Jacky Chan",
+    "role": "Sales Associate",
+    "qualification": "Sales Representative",
+    "phone": "0412 775 167",
+    "email": "sales@exceptionalrealestate.com.au",
+    "photoUrl": "https://images.zenu.com.au/t0vszffcn7n0sb2u453476ixmaplsulm.png",
+    "languages": [
+      "English",
+      "Cantonese",
+      "Mandarin"
+    ],
+    "specialties": [
+      "Residential Sales",
+      "Buyer Management",
+      "Home Open Coordination"
+    ],
+    "bio": "Dedicated to responsive buyer service and local market insight across inner and southern Perth suburbs.",
+    "activeListingsCount": 4,
+    "soldCount12Months": 9,
+    "initials": "JC"
+  },
+  {
+    "id": "agent-bima-putra",
+    "name": "Bima Putra",
+    "role": "Sales Associate",
+    "qualification": "Sales Representative",
+    "phone": "0424 429 895",
+    "email": "sales@exceptionalrealestate.com.au",
+    "photoUrl": "https://images.zenu.com.au/2kk84fpska6hjjgcq8pdqvs1nam9qatg.png",
+    "languages": [
+      "English",
+      "Indonesian",
+      "Balinese"
+    ],
+    "specialties": [
+      "Residential Sales",
+      "Client Care",
+      "Buyer Matching"
+    ],
+    "bio": "Bringing a client-first approach and fluency in English, Indonesian, and Balinese to guide buyers and sellers smoothly through every transaction.",
+    "activeListingsCount": 4,
+    "soldCount12Months": 8,
+    "initials": "BP"
+  },
+  {
+    "id": "agent-jess-kaur",
+    "name": "Jess Kaur",
+    "role": "Sales Associate",
+    "qualification": "Sales Representative",
+    "phone": "0435 245 227",
+    "email": "sales@exceptionalrealestate.com.au",
+    "photoUrl": "https://images.zenu.com.au/strvkxeeaqsolg83ppykh66en9ak3dvt.png",
+    "languages": [
+      "English",
+      "Punjabi",
+      "Hindi"
+    ],
+    "specialties": [
+      "Residential Sales",
+      "Property Presentation",
+      "Buyer Engagement"
+    ],
+    "bio": "Focused on clear communication, warm client care, and helping homeowners present their properties for optimal market reception.",
+    "activeListingsCount": 3,
+    "soldCount12Months": 7,
+    "initials": "JK"
+  }
+]

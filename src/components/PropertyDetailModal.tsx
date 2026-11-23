@@ -1,3 +1,4 @@
+import { displayPropertyPrice } from '../propertyPresentation';
 import React from 'react';
 import {
   X,
@@ -11,20 +12,16 @@ import {
 } from 'lucide-react';
 import { PropertyListing, TeamMember } from '../data/initialData';
 import { PropertyImage } from './PropertyImage';
+import type { SubmitEnquiry, EnquiryReceipt } from '../enquiries';
+import { EnquiryConfirmation } from './EnquiryConfirmation';
+import { EnquirySpamField } from './EnquirySpamField';
+import { NewsletterOptIn } from './NewsletterOptIn';
 
 interface PropertyDetailModalProps {
   property: PropertyListing | null;
   agents: TeamMember[];
   onClose: () => void;
-  onSubmitEnquiry: (data: {
-    type: 'Property Enquiry' | 'Inspection Registration';
-    clientName: string;
-    email: string;
-    phone: string;
-    propertyTitle: string;
-    propertyId: string;
-    message: string;
-  }) => void;
+  onSubmitEnquiry: SubmitEnquiry;
 }
 
 export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
@@ -40,6 +37,10 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   const [message, setMessage] = React.useState('');
   const [submitted, setSubmitted] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const locked = React.useRef(false);
+  const [receipt, setReceipt] = React.useState<EnquiryReceipt | null>(null);
+  const [newsletterOptIn,setNewsletterOptIn]=React.useState(true);
   const [imageIndex, setImageIndex] = React.useState(0);
   const panel = React.useRef<HTMLDivElement>(null);
   const close = React.useRef(onClose);
@@ -73,6 +74,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   React.useEffect(() => {
     if (property) {
       setSubmitted(false);
+      setReceipt(null);
       setErrorMsg('');
       setMessage(`I would like more information or to arrange an inspection for ${property.title}, ${property.suburb}.`);
     }
@@ -85,8 +87,10 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
     ? agents.find((a) => a.id === property.coAgentId)
     : undefined;
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (locked.current) return;
+    const website = String(new FormData(e.currentTarget as HTMLFormElement).get('website') || '');
     if (!clientName.trim() || !email.trim() || !phone.trim()) {
       setErrorMsg('Please provide your full name, email address, and phone number.');
       return;
@@ -95,7 +99,11 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
       setErrorMsg('Please enter a valid email address.');
       return;
     }
-    onSubmitEnquiry({
+    locked.current = true;
+    setBusy(true);
+    setErrorMsg('');
+    try {
+    const saved = await onSubmitEnquiry({
       type: enquiryType,
       clientName: clientName.trim(),
       email: email.trim(),
@@ -103,9 +111,15 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
       propertyTitle: `${property.title}, ${property.suburb}`,
       propertyId: property.id,
       message: message.trim(),
+      agentName: leadAgent.name,
+      website,
+      newsletterOptIn,
     });
     setSubmitted(true);
-    setErrorMsg('');
+    setReceipt(saved);
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : 'Please try again.');
+    } finally { locked.current = false; setBusy(false); }
   };
 
   return (
@@ -186,7 +200,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               <div className="sm:text-right">
                 <p className="text-xs text-white/70 font-inter">Price Guide</p>
                 <p className="font-cormorant text-2xl sm:text-4xl font-normal text-white tabular-nums">
-                  {property.priceDisplay}
+                  {displayPropertyPrice(property)}
                 </p>
               </div>
             </div>
@@ -331,18 +345,19 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                   Enquire About This Property
                 </h4>
                 <p className="text-xs text-neutral-600 mt-1 font-inter">
-                  Direct message to {leadAgent.name} at Exceptional Real Estate.
+                  Send an enquiry to our sales team about this property. Lead agent: {leadAgent.name}.
                 </p>
 
                 {submitted ? (
                   <div className="mt-4 p-4 bg-[#ededed] border border-black text-black space-y-2">
                     <div className="flex items-center gap-2 text-sm font-medium text-black">
                       <Check className="w-4 h-4" />
-                      <span>Enquiry Sent</span>
+                      <span>Enquiry Received</span>
                     </div>
                     <p className="text-xs text-neutral-700 leading-relaxed font-inter">
                       Thank you, {clientName}. Your enquiry for{' '}
                       <span className="font-semibold">{property.title}</span> has been logged.
+                      {receipt?.preview && ' Preview only — no email was sent.'}
                     </p>
                     <button
                       type="button"
@@ -354,6 +369,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                   </div>
                 ) : (
                   <form onSubmit={handleFormSubmit} className="mt-4 space-y-3">
+                    <EnquirySpamField />
                     <div className="flex gap-2">
                       <button
                         type="button"
@@ -380,7 +396,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                     </div>
 
                     {errorMsg && (
-                      <p className="text-xs text-red-700 bg-red-50 border border-red-200 px-3 py-2">
+                      <p role="alert" className="text-xs text-black bg-white border border-black px-3 py-2">
                         {errorMsg}
                       </p>
                     )}
@@ -422,11 +438,13 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                       />
                     </div>
 
+                    <NewsletterOptIn checked={newsletterOptIn} onChange={setNewsletterOptIn}/>
                     <button
                       type="submit"
-                      className="zenu-button w-full"
+                      disabled={busy}
+                      className="zenu-button w-full disabled:opacity-50"
                     >
-                      Submit Enquiry
+                      {busy ? 'Submitting…' : 'Submit Enquiry'}
                     </button>
                   </form>
                 )}
@@ -435,6 +453,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           </div>
         </div>
       </div>
+      <EnquiryConfirmation receipt={receipt} onClose={() => setReceipt(null)} />
     </div>
   );
 };

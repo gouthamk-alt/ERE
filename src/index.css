@@ -1,5 +1,27 @@
 @import "tailwindcss";
 
+.admin-label { display:flex; flex-direction:column; gap:.5rem; font-size:.8rem; text-transform:none; }
+.admin-input { width:100%; background:#fff; color:#111; padding:.7rem; border:1px solid #777; border-radius:0; font-size:.9rem; }
+.admin-action { display:inline-flex; align-items:center; justify-content:center; padding:.65rem 1rem; border:1px solid currentColor; font-size:.8rem; cursor:pointer; gap:.5rem; }
+.admin-action:disabled { opacity:.4; cursor:wait; }
+.admin-table { width:100%; text-align:left; font-size:.85rem; border-collapse:collapse; }
+.admin-table th,.admin-table td { padding:1rem; border-bottom:1px solid #666; vertical-align:top; }
+.rich-editor { background:#fff; color:#111; border:1px solid #888; text-align:left; }
+.rich-toolbar { display:flex; flex-wrap:wrap; gap:.35rem; padding:.65rem; background:#f1f1f1; border-bottom:1px solid #aaa; position:sticky; top:0; z-index:2; }
+.rich-toolbar select,.rich-tool { font-family:Arial,sans-serif; font-size:12px; color:#111; background:#fff; border:1px solid #bbb; padding:.35rem .5rem; cursor:pointer; }
+.rich-tool[aria-pressed=true] { background:#111; color:#fff; }
+.rich-tool input[type=color] { width:22px; height:22px; vertical-align:middle; margin-left:4px; }
+.rich-document { min-height:300px; padding:1.5rem; font-family:Arial,sans-serif; font-size:16px; line-height:1.7; overflow-wrap:anywhere; outline:none; }
+.rich-document h1 {font-size:2.2em;font-weight:700;margin:.6em 0;}
+.rich-document h2 {font-size:1.7em;font-weight:700;margin:.6em 0;}
+.rich-document h3 {font-size:1.35em;font-weight:700;margin:.6em 0;}
+.rich-document p { margin:.6em 0; }.rich-document ul {list-style:disc;padding-left:1.5em;}.rich-document ol{list-style:decimal;padding-left:1.5em;}
+.rich-document table {border-collapse:collapse;width:100%;}.rich-document td,.rich-document th {border:1px solid #999;padding:.6rem;min-width:50px;}.rich-document th{font-weight:bold;}
+.rich-document img {max-width:100%;height:auto;display:block;margin:1em 0;}.rich-document a{text-decoration:underline;}.rich-document blockquote {border-left:3px solid #999;padding-left:1em;}
+.rich-document .selectedCell {background:#ddd;}.rich-document.public-rich-text {padding:0;min-height:0;color:inherit;}
+
+.enquiry-confirmation::backdrop { background: rgb(0 0 0 / 75%); backdrop-filter: blur(4px); }
+
 @layer base {
   :root {
     --page-bg: #302f2f;
@@ -127,7 +149,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-.public-site h1, .public-site h2 { font-weight: 400; letter-spacing: -0.025em; }
+.public-site h1, .public-site h2, .public-site h3 { font-family: Arial, Helvetica, sans-serif; font-weight: 700; letter-spacing: -0.025em; line-height: 1.12; }
+.public-site .font-cormorant { font-family: Arial, Helvetica, sans-serif; }
 .public-site h2 { line-height: 1.12; }
 .public-site button, .public-site a { text-underline-offset: 4px; }
 .public-site :focus-visible { outline: 2px solid #a8a8a8; outline-offset: 4px; }
@@ -146,7 +169,7 @@
 .property-card-badge { position: absolute; top: 16px; left: 16px; padding: 5px 10px; background: #fff; color: #000000; font-size: 11px; font-weight: 500; }
 .property-card-body { padding: 24px 0; width: 100%; flex: 1; display: flex; flex-direction: column; }
 .property-card-suburb { color: #aaaaaa; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.5; }
-.property-card h3 { font-family: var(--font-cormorant); font-size: 29px; font-weight: 500; line-height: 1.15; margin: 8px 0 12px; }
+.property-card h3 { font-family: Arial, Helvetica, sans-serif; font-size: 29px; font-weight: 700; line-height: 1.15; margin: 8px 0 12px; }
 .property-card-price { font-size: 14px; font-weight: 500; margin-bottom: 20px; }
 .property-card-specs { display: flex; gap: 22px; font-size: 13px; padding-bottom: 20px; }
 .property-card-specs > span { display: inline-flex; gap: 8px; align-items: center; }
@@ -224,6 +247,14 @@
 .agent-contact-input { display: block; width: 100%; min-width: 0; margin-top: 10px; padding: 12px 0; font: inherit; font-size: 16px; color: white; background: transparent; border: 0; border-bottom: 1px solid #ffffff35; border-radius: 0; }
 .agent-contact-input:focus { border-color: white; }
 .agent-profile textarea { resize: vertical; }
+.careers-page textarea { resize: vertical; }
+.careers-page select { background: #000; color: #fff; color-scheme: dark; }
+.careers-page .zenu-button-outline-light { height: auto; min-height: 44px; line-height: 1.5; padding: 12px 20px; white-space: normal; }
+.video-player { width: 100%; aspect-ratio: 16/9; min-height: 200px; }
+.video-player-short { aspect-ratio: 9/16; max-width: 360px; margin-inline: auto; }
+.video-tile[aria-pressed="true"] { outline: 1px solid #ffffff80; outline-offset: 6px; }
+.video-library .agent-listing-filter[aria-pressed="true"] { background: #ffffff1f; color: white; }
+.video-library .zenu-button-outline-light { height: auto; min-height: 44px; padding: 10px 18px; line-height: 1.5; white-space: normal; }
 .agent-profile .zenu-button-outline-light { height: auto; min-height: 44px; white-space: normal; line-height: 1.5; padding: 12px 22px; }
 
 /* Client preview: white lettering and controls on black surfaces. */

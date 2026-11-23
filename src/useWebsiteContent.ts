@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { BlogPost, PropertyListing } from './data/initialData';
+import type { BlogPost, PropertyListing, TeamMember } from './data/initialData';
 import { getBrowserEdits, markBrowserEditsImported, type LegacyContent } from './legacyContent';
 
-type Content = { listings: PropertyListing[]; blogPosts: BlogPost[]; revision: string };
-type Operation = { collection: 'listings' | 'blogPosts'; action: 'add' | 'update' | 'delete'; item?: PropertyListing | BlogPost; id?: string }
+type Content = { listings: PropertyListing[]; blogPosts: BlogPost[]; teamMembers: TeamMember[]; revision: string };
+type Operation = { collection: 'listings' | 'blogPosts' | 'teamMembers'; action: 'add' | 'update' | 'delete'; item?: PropertyListing | BlogPost | TeamMember; id?: string }
   | { action: 'import'; legacy: LegacyContent };
 async function readResponse(response: Response): Promise<Content> {
   let data;
@@ -75,5 +75,5 @@ export function useWebsiteContent() {
     setBrowserEdits(null);
     return true;
   };
-  return { listings: content?.listings || [], blogPosts: content?.blogPosts || [], ready: Boolean(content), error, saving, refresh, save, browserEdits, importBrowserEdits };
+  return { listings: content?.listings || [], blogPosts: content?.blogPosts || [], teamMembers: content?.teamMembers || [], ready: Boolean(content), error, saving, refresh, save, browserEdits, importBrowserEdits };
 }

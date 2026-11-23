@@ -1,7 +1,9 @@
 import seed from './content-seed.json' with { type: 'json' };
+import teamSeed from './team-seed.json' with { type: 'json' };
+import { cleanRichText } from './rich-text.mjs';
 
 const KEY = 'website-content-v1';
-export const initialContent = seed;
+export const initialContent = { ...seed, teamMembers: teamSeed };
 const json = (value, status = 200) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store' } });
 const fields = {
   listings: {
@@ -11,6 +13,7 @@ const fields = {
     arrays: ['features'],
   },
   blogPosts: { text: ['id', 'title', 'date', 'category', 'author', 'excerpt'], optional: [], numeric: [], arrays: ['content'] },
+  teamMembers: {},
 };
 export const canonical = (value) => JSON.stringify(value, (_key, item) => item && typeof item === 'object' && !Array.isArray(item)
   ? Object.fromEntries(Object.keys(item).sort().map((key) => [key, item[key]])) : item);
@@ -18,7 +21,7 @@ export const canonical = (value) => JSON.stringify(value, (_key, item) => item &
 // Import only browser changes relative to the original site, preserving later live edits.
 export function mergeLegacyContent(current, legacy) {
   const result = structuredClone(current);
-  for (const collection of Object.keys(fields)) {
+  for (const collection of ['listings', 'blogPosts']) {
     if (!Array.isArray(legacy?.[collection]) || legacy[collection].length > 1000) throw new Error('Invalid browser backup.');
     const local = legacy[collection].map((item) => validateItem(collection, item));
     if (new Set(local.map((item) => item.id)).size !== local.length) throw new Error('The backup contains duplicate IDs.');
@@ -44,6 +47,22 @@ function validImage(value) {
 }
 export function validateItem(collection, value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid content.');
+  if (collection === 'teamMembers') {
+    const member = {};
+    for (const key of ['id', 'name', 'role', 'qualification', 'phone', 'email', 'bio', 'initials']) {
+      if (typeof value[key] !== 'string' || value[key].length > (key === 'bio' ? 10000 : 300)) throw new Error(`Check the ${key} field.`);
+      member[key] = value[key].trim();
+    }
+    if (!/^[\w-]{1,100}$/.test(member.id) || !member.name || !member.role || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(member.email)) throw new Error('Provide a name, role and valid email.');
+    if (!validImage(value.photoUrl)) throw new Error('Choose a valid portrait image.');
+    member.photoUrl = value.photoUrl;
+    for (const key of ['languages', 'specialties']) {
+      if (!Array.isArray(value[key]) || value[key].length > 30 || value[key].some(text => typeof text !== 'string' || text.length > 200)) throw new Error(`Check ${key}.`);
+      member[key] = value[key];
+    }
+    for (const key of ['activeListingsCount', 'soldCount12Months']) member[key] = Number.isFinite(value[key]) && value[key] >= 0 ? value[key] : 0;
+    return member;
+  }
   const schema = fields[collection];
   const item = {};
   for (const key of schema.text) {
@@ -69,6 +88,7 @@ export function validateItem(collection, value) {
   item.imageUrl = value.imageUrl;
   if (value.featured !== undefined && typeof value.featured !== 'boolean') throw new Error('Featured must be true or false.');
   item.featured = Boolean(value.featured);
+  if (collection === 'blogPosts' && value.bodyHtml !== undefined) item.bodyHtml = cleanRichText(value.bodyHtml);
   if (collection === 'listings') {
     for (const [key, allowed] of Object.entries({
       category: ['Residential Sale', 'Residential Lease', 'Commercial', 'Sold', 'Leased'],
@@ -91,10 +111,12 @@ export function createContentHandler({ store, authorize }) {
   async function read() {
     let entry = await store.getWithMetadata(KEY, { type: 'json' });
     if (!entry) {
-      await store.setJSON(KEY, structuredClone(seed), { onlyIfNew: true });
+      await store.setJSON(KEY, structuredClone(initialContent), { onlyIfNew: true });
       entry = await store.getWithMetadata(KEY, { type: 'json' });
     }
     if (!entry || !Array.isArray(entry.data.listings) || !Array.isArray(entry.data.blogPosts)) throw new Error('Storage unavailable');
+    // Old deployments have no team collection. Seed it in memory without overwriting saved listings/blogs.
+    if (!Array.isArray(entry.data.teamMembers)) entry.data.teamMembers = structuredClone(teamSeed);
     return entry;
   }
   return async (request, context = {}) => {
@@ -102,7 +124,7 @@ export function createContentHandler({ store, authorize }) {
       const { pathname } = new URL(request.url);
       if (pathname === '/api/content' && request.method === 'GET') {
         const { data, etag } = await read();
-        return json({ ...data, revision: etag });
+        return json({ listings: data.listings, blogPosts: data.blogPosts, teamMembers: data.teamMembers, revision: etag });
       }
       if (pathname !== '/api/admin/content') return json({ error: 'Not found.' }, 404);
       const denied = await authorize(request, context);
@@ -127,9 +149,10 @@ export function createContentHandler({ store, authorize }) {
         if (!result.modified) return json({ error: 'Another edit was saved during import. Reload the latest content and try again.' }, 409);
         return json({ ...data, revision: result.etag });
       }
-      if (raw.length > 128000) return json({ error: 'This item is too large.' }, 413);
+      if (raw.length > 256000) return json({ error: 'This item is too large.' }, 413);
       const items = entry.data[input.collection];
       const id = input.action === 'delete' ? input.id : input.item?.id;
+      if (input.collection === 'teamMembers' && input.action === 'delete' && entry.data.listings.some(item => item.agentId === id || item.coAgentId === id)) return json({ error: 'Reassign this member’s listings before deleting their profile.' }, 400);
       const index = items.findIndex((item) => item.id === id);
       if (input.action === 'add' && index !== -1) return json({ error: 'That item already exists. Reload and try again.' }, 409);
       if (input.action !== 'add' && index === -1) return json({ error: 'That item no longer exists. Reload the latest content.' }, 404);
@@ -138,6 +161,7 @@ export function createContentHandler({ store, authorize }) {
       else {
         let item;
         try { item = validateItem(input.collection, input.item); } catch (error) { return json({ error: error.message }, 400); }
+        if(input.collection==='listings'&&(!entry.data.teamMembers.some(member=>member.id===item.agentId)||(item.coAgentId&&!entry.data.teamMembers.some(member=>member.id===item.coAgentId))))return json({error:'Choose an existing team member for this listing.'},400);
         nextItems = input.action === 'add' ? [item, ...items] : items.map((old) => old.id === id ? item : old);
       }
       if (nextItems.length > 1000) return json({ error: 'This collection has reached its content limit.' }, 400);

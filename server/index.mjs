@@ -5,6 +5,11 @@ import { fileURLToPath } from 'node:url';
 import { installAdminAuth } from './auth.mjs';
 import { createContentHandler } from './content.mjs';
 import { createLocalContentStore } from './local-content-store.mjs';
+import { createEnquiryService, createEmailSender } from './enquiries.mjs';
+import { createLocalEnquiryStore } from './local-enquiry-store.mjs';
+import { createMicrosoftConnection } from './microsoft-email.mjs';
+import { createMediaHandler } from './media.mjs';
+import { createMarketingService } from './marketing.mjs';
 
 const app = express();
 const production = process.env.NODE_ENV === 'production';
@@ -12,7 +17,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 app.disable('x-powered-by');
 // Set TRUST_PROXY=1 only when hosted behind one trusted reverse proxy.
 if (process.env.TRUST_PROXY === '1') app.set('trust proxy', 1);
-app.use(express.json({ limit: '3mb' }));
+app.use(express.json({ limit: '5mb', verify: (req, _res, buffer) => { req.rawBody = buffer; } }));
 app.use('/admin', (_req, res, next) => {
   res.set('X-Robots-Tag', 'noindex, nofollow');
   res.set('Cache-Control', 'no-store');
@@ -38,6 +43,45 @@ app.all(['/api/content', '/api/admin/content'], async (req, res) => {
   response.headers.forEach((value, key) => res.set(key, value));
   res.status(response.status).send(await response.text());
 });
+// Local/standalone servers are a no-email sandbox. Enable delivery only in Netlify production.
+const enquiries = createEnquiryService({
+  store: createLocalEnquiryStore(path.join(root, '.ere-data', 'enquiries')),
+  sender: createEmailSender(), preview: true, authorize: async () => null,
+  captureContact:(record,confirmed)=>marketing.captureEnquiryContact(record,confirmed),
+});
+app.all(['/api/enquiries','/api/enquiries/subscribe', '/api/admin/enquiries'], async (req, res) => {
+  const request = new Request(`${req.protocol}://${req.get('host')}${req.originalUrl}`, {
+    method: req.method,
+    headers: Object.fromEntries(Object.entries(req.headers).filter(([key, value]) => typeof value === 'string' && key !== 'content-length')),
+    body: ['GET', 'HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body),
+  });
+  const response = req.path.startsWith('/api/admin/') ? await enquiries.inspect(request) : await enquiries.submit(request, { ip: req.ip });
+  response.headers.forEach((value, key) => res.set(key, value));
+  res.status(response.status).send(await response.text());
+});
+const microsoft = createMicrosoftConnection({
+  store: createLocalEnquiryStore(path.join(root, '.ere-data', 'microsoft-email')),
+  authorize: async () => null, enabled: false,
+});
+app.all(['/api/admin/email/microsoft', '/api/admin/email/microsoft/connect', '/api/email/microsoft/callback'], async (req, res) => {
+  const request = new Request(`${req.protocol}://${req.get('host')}${req.originalUrl}`, {
+    method: req.method,
+    headers: Object.fromEntries(Object.entries(req.headers).filter(([key, value]) => typeof value === 'string' && key !== 'content-length')),
+    body: ['GET', 'HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body),
+  });
+  const response = await microsoft.handle(request, { ip: req.ip });
+  response.headers.forEach((value, key) => res.set(key, value));
+  res.status(response.status).send(await response.text());
+});
+const media=createMediaHandler({store:createLocalEnquiryStore(path.join(root,'.ere-data','media')),authorize:async()=>null});
+const marketing=createMarketingService({store:createLocalEnquiryStore(path.join(root,'.ere-data','marketing')),authorize:async()=>null,preview:true});
+app.all(['/api/admin/media','/api/media/:id','/api/fonts.css','/api/admin/contacts','/api/admin/newsletters','/api/newsletter/unsubscribe','/api/newsletter/webhook'],async(req,res)=>{
+  const request=new Request(`${req.protocol}://${req.get('host')}${req.originalUrl}`,{method:req.method,headers:Object.fromEntries(Object.entries(req.headers).filter(([key,value])=>typeof value==='string'&&key!=='content-length')),body:['GET','HEAD'].includes(req.method)?undefined:(req.rawBody||JSON.stringify(req.body))});
+  const handler=req.path.includes('/media')||req.path==='/api/fonts.css'?media:marketing.handle;
+  const response=await handler(request,{ip:req.ip});
+  response.headers.forEach((value,key)=>res.set(key,value));
+  res.status(response.status).send(Buffer.from(await response.arrayBuffer()));
+});
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found.' }));
 if (production) {
   app.use(express.static(path.join(root, 'dist')));
@@ -48,4 +92,4 @@ if (production) {
   app.use(vite.middlewares);
 }
 const port = Number(process.env.PORT || 3000);
-app.listen(port, '0.0.0.0', () => console.log(`ERE website: http://localhost:${port}`));
+app.listen(port, process.env.ERE_LISTEN_HOST || '0.0.0.0', () => console.log(`ERE website: http://localhost:${port}`));

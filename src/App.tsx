@@ -31,9 +31,16 @@ import { PropertyImage } from './components/PropertyImage';
 import { PropertyCard } from './components/PropertyCard';
 import { PropertyDetailModal } from './components/PropertyDetailModal';
 import { TeamMemberProfile } from './components/TeamMemberProfile';
+import { Careers } from './components/Careers';
+import { VideoLibrary } from './components/VideoLibrary';
 import { AdminAccess } from './components/AdminAccess';
 import { useWebsiteContent } from './useWebsiteContent';
 import { usePageMotion } from './usePageMotion';
+import { submitEnquiry, type EnquiryReceipt } from './enquiries';
+import { EnquiryConfirmation } from './components/EnquiryConfirmation';
+import { EnquirySpamField } from './components/EnquirySpamField';
+import DOMPurify from 'dompurify';
+import { NewsletterOptIn } from './components/NewsletterOptIn';
 
 const AdminDashboard = lazy(() => import('./components/AdminDashboard').then((module) => ({ default: module.AdminDashboard })));
 
@@ -43,13 +50,14 @@ type ActivePage =
   | 'list-with-us'
   | 'team'
   | 'team-profile'
+  | 'careers'
   | 'videos'
   | 'blog';
 
 const STORAGE_KEY_ENQUIRIES = 'exceptional_re_zenu_enquiries_v3';
 
 export default function App() {
-  const { listings, blogPosts, ready: contentReady, error: contentError, saving, refresh: refreshContent, save: saveContent, browserEdits, importBrowserEdits } = useWebsiteContent();
+  const { listings, blogPosts, teamMembers, ready: contentReady, error: contentError, saving, refresh: refreshContent, save: saveContent, browserEdits, importBrowserEdits } = useWebsiteContent();
 
   const [enquiries, setEnquiries] = useState<ClientEnquiry[]>(() => {
     try {
@@ -64,12 +72,32 @@ export default function App() {
     return INITIAL_ENQUIRIES;
   });
 
-  const [teamMembers] = useState<TeamMember[]>(INITIAL_TEAM_MEMBERS);
   const [activePage, setActivePage] = useState<ActivePage>('home');
   const [selectedTeamMemberId, setSelectedTeamMemberId] = useState<string | null>(null);
   usePageMotion(activePage, contentReady);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!openDropdown && !mobileMenuOpen) return;
+    const dismissOutside = (event: PointerEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('[data-navigation-dropdown]')) setOpenDropdown(null);
+      if (!target.closest('header')) setMobileMenuOpen(false);
+    };
+    const dismissEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (openDropdown) document.querySelector<HTMLButtonElement>(`[data-dropdown-trigger="${openDropdown}"]`)?.focus();
+      setOpenDropdown(null);
+      setMobileMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', dismissOutside);
+    document.addEventListener('keydown', dismissEscape);
+    return () => {
+      document.removeEventListener('pointerdown', dismissOutside);
+      document.removeEventListener('keydown', dismissEscape);
+    };
+  }, [openDropdown, mobileMenuOpen]);
 
   // Six properties on the homepage; the directory contains the full collection.
 
@@ -96,11 +124,15 @@ export default function App() {
     phone: '',
     propertyAddress: '',
     serviceInterest: 'Sell with us — Free Sales Appraisal',
-    preferredAgent: 'Wendy Chia (Director & Licensee, Licence No. RA84388)',
+    preferredAgent: 'Wendy Chia (Director & Licensee)',
     notes: '',
+    newsletterOptIn:true,
   });
   const [appraisalSubmitted, setAppraisalSubmitted] = useState(false);
   const [appraisalError, setAppraisalError] = useState('');
+  const [appraisalBusy, setAppraisalBusy] = useState(false);
+  const appraisalLock = React.useRef(false);
+  const [enquiryReceipt, setEnquiryReceipt] = useState<EnquiryReceipt | null>(null);
 
   useEffect(() => {
     try {
@@ -156,31 +188,7 @@ export default function App() {
     return saved;
   };
 
-  const handleAddEnquiry = (data: {
-    type: ClientEnquiry['type'];
-    clientName: string;
-    email: string;
-    phone: string;
-    propertyTitle?: string;
-    propertyId?: string;
-    suburbOrAddress?: string;
-    message: string;
-  }) => {
-    const newEntry: ClientEnquiry = {
-      id: `enq-${Date.now().toString().slice(-4)}`,
-      type: data.type,
-      clientName: data.clientName,
-      email: data.email,
-      phone: data.phone,
-      propertyTitle: data.propertyTitle,
-      propertyId: data.propertyId,
-      suburbOrAddress: data.suburbOrAddress,
-      message: data.message,
-      createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
-      status: 'New',
-    };
-    setEnquiries((prev) => [newEntry, ...prev]);
-  };
+  const handleAddEnquiry = submitEnquiry;
 
   const handleUpdateEnquiryStatus = (id: string, status: ClientEnquiry['status']) => {
     setEnquiries((prev) =>
@@ -188,8 +196,10 @@ export default function App() {
     );
   };
 
-  const handleAppraisalSubmit = (e: React.FormEvent) => {
+  const handleAppraisalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (appraisalLock.current) return;
+    const website = String(new FormData(e.currentTarget as HTMLFormElement).get('website') || '');
     if (
       !appraisalForm.fullName.trim() ||
       !appraisalForm.email.trim() ||
@@ -204,17 +214,31 @@ export default function App() {
       return;
     }
 
-    handleAddEnquiry({
+    appraisalLock.current = true;
+    setAppraisalBusy(true);
+    setAppraisalError('');
+    try {
+    const receipt = await handleAddEnquiry({
       type: 'Free Appraisal',
       clientName: appraisalForm.fullName.trim(),
       email: appraisalForm.email.trim(),
       phone: appraisalForm.phone.trim(),
       suburbOrAddress: appraisalForm.propertyAddress.trim(),
-      message: `[${appraisalForm.serviceInterest} · ${appraisalForm.preferredAgent}] ${appraisalForm.notes.trim() || 'Appraisal requested via website.'}`,
+      message: appraisalForm.notes.trim() || 'Appraisal requested via website.',
+      agentName: appraisalForm.preferredAgent,
+      serviceInterest: appraisalForm.serviceInterest,
+      website,
+      newsletterOptIn:appraisalForm.newsletterOptIn,
     });
 
     setAppraisalSubmitted(true);
-    setAppraisalError('');
+    setEnquiryReceipt(receipt);
+    } catch (error) {
+      setAppraisalError(error instanceof Error ? error.message : 'Please try again.');
+    } finally {
+      appraisalLock.current = false;
+      setAppraisalBusy(false);
+    }
   };
 
   // Filtered Listings
@@ -295,6 +319,8 @@ export default function App() {
           onDeleteListing={handleDeleteListing}
           onAddBlogPost={handleAddBlogPost}
           onUpdateBlogPost={handleUpdateBlogPost}
+          onSaveTeamMember={(item, existing) => saveContent({collection:'teamMembers',action:existing?'update':'add',item})}
+          onDeleteTeamMember={id=>saveContent({collection:'teamMembers',action:'delete',id})}
           onDeleteBlogPost={handleDeleteBlogPost}
           onUpdateEnquiryStatus={handleUpdateEnquiryStatus}
           onRefreshContent={refreshContent}
@@ -352,25 +378,23 @@ export default function App() {
           </a>
 
           {/* Zone 2: Clean Centered Navigation Links with Subtle Dropdowns */}
-          <nav className="hidden lg:flex items-center gap-8 text-sm font-inter font-light">
+          <nav className="hidden xl:flex items-center gap-5 text-sm font-inter font-light">
             {/* Buy Dropdown */}
             <div
-              className="relative"
-              onMouseEnter={() => setOpenDropdown('buy')}
-              onFocus={() => setOpenDropdown('buy')}
+              className="relative" data-navigation-dropdown
               onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpenDropdown(null); }}
-              onMouseLeave={() => setOpenDropdown(null)}
             >
               <button
                 type="button"
-                onClick={() => navigateTo('listings', 'Residential Sale')}
+                onClick={() => setOpenDropdown(openDropdown === 'buy' ? null : 'buy')}
+                data-dropdown-trigger="buy" aria-expanded={openDropdown === 'buy'} aria-controls="buy-navigation"
                 className="flex items-center gap-1.5 py-2 text-white/90 hover:text-white transition-colors cursor-pointer whitespace-nowrap"
               >
                 <span>Buy</span>
                 <ChevronDown className="w-3.5 h-3.5 opacity-60" />
               </button>
               {openDropdown === 'buy' && (
-                <div className="absolute left-0 top-full w-56 bg-[#202020] border border-white/15 py-2 shadow-2xl z-50">
+                <div id="buy-navigation" className="absolute left-0 top-full w-56 bg-[#202020] border border-white/15 py-2 shadow-2xl z-50">
                   <button
                     type="button"
                     onClick={() => navigateTo('listings', 'Residential Sale')}
@@ -398,22 +422,20 @@ export default function App() {
 
             {/* Lease Dropdown */}
             <div
-              className="relative"
-              onMouseEnter={() => setOpenDropdown('lease')}
-              onFocus={() => setOpenDropdown('lease')}
+              className="relative" data-navigation-dropdown
               onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpenDropdown(null); }}
-              onMouseLeave={() => setOpenDropdown(null)}
             >
               <button
                 type="button"
-                onClick={() => navigateTo('listings', 'Residential Lease')}
+                onClick={() => setOpenDropdown(openDropdown === 'lease' ? null : 'lease')}
+                data-dropdown-trigger="lease" aria-expanded={openDropdown === 'lease'} aria-controls="lease-navigation"
                 className="flex items-center gap-1.5 py-2 text-white/90 hover:text-white transition-colors cursor-pointer whitespace-nowrap"
               >
                 <span>Lease</span>
                 <ChevronDown className="w-3.5 h-3.5 opacity-60" />
               </button>
               {openDropdown === 'lease' && (
-                <div className="absolute left-0 top-full w-56 bg-[#202020] border border-white/15 py-2 shadow-2xl z-50">
+                <div id="lease-navigation" className="absolute left-0 top-full w-56 bg-[#202020] border border-white/15 py-2 shadow-2xl z-50">
                   <button
                     type="button"
                     onClick={() => navigateTo('listings', 'Residential Lease')}
@@ -441,22 +463,20 @@ export default function App() {
 
             {/* List with us */}
             <div
-              className="relative"
-              onMouseEnter={() => setOpenDropdown('list')}
-              onFocus={() => setOpenDropdown('list')}
+              className="relative" data-navigation-dropdown
               onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setOpenDropdown(null); }}
-              onMouseLeave={() => setOpenDropdown(null)}
             >
               <button
                 type="button"
-                onClick={() => navigateTo('list-with-us')}
+                onClick={() => setOpenDropdown(openDropdown === 'list' ? null : 'list')}
+                data-dropdown-trigger="list" aria-expanded={openDropdown === 'list'} aria-controls="list-navigation"
                 className="flex items-center gap-1.5 py-2 text-white/90 hover:text-white transition-colors cursor-pointer whitespace-nowrap"
               >
                 <span>List with us</span>
                 <ChevronDown className="w-3.5 h-3.5 opacity-60" />
               </button>
               {openDropdown === 'list' && (
-                <div className="absolute left-0 top-full w-52 bg-[#202020] border border-white/15 py-2 shadow-2xl z-50">
+                <div id="list-navigation" className="absolute left-0 top-full w-52 bg-[#202020] border border-white/15 py-2 shadow-2xl z-50">
                   <button
                     type="button"
                     onClick={() => navigateTo('list-with-us')}
@@ -511,6 +531,7 @@ export default function App() {
             >
               Blogs
             </button>
+            <button type="button" onClick={() => navigateTo('careers')} className="py-2 text-white/90 hover:text-white cursor-pointer whitespace-nowrap">Careers</button>
           </nav>
 
           {/* Zone 3: Primary Actions */}
@@ -526,7 +547,7 @@ export default function App() {
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'} aria-expanded={mobileMenuOpen} aria-controls="mobile-navigation"
-              className="lg:hidden p-2 text-white cursor-pointer"
+              className="xl:hidden p-2 text-white cursor-pointer"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -535,7 +556,7 @@ export default function App() {
 
         {/* Mobile Drawer */}
         {mobileMenuOpen && (
-          <div id="mobile-navigation" className="mobile-navigation lg:hidden fixed inset-x-0 top-20 bg-[#202020] border-b border-white/15 p-6 space-y-4 z-50">
+          <div id="mobile-navigation" className="mobile-navigation xl:hidden fixed inset-x-0 top-20 bg-[#202020] border-b border-white/15 p-6 space-y-4 z-50">
             <div className="flex flex-col space-y-3 text-sm font-inter">
               <button
                 type="button"
@@ -593,6 +614,7 @@ export default function App() {
               >
                 Blogs & Market Insights
               </button>
+              <button type="button" onClick={() => navigateTo('careers')} className="text-left py-1 text-white">Careers</button>
             </div>
           </div>
         )}
@@ -637,11 +659,10 @@ export default function App() {
                       <span>Perth Western Australia</span>
                     </div>
                     <h1
-                      className="font-cormorant text-[44px] sm:text-[60px] lg:text-[68px] leading-[1.05] font-light text-white tracking-tight"
+                      className="font-cormorant text-[40px] sm:text-[56px] lg:text-[64px] leading-[1.05] font-light text-white tracking-tight"
                       style={{ textWrap: 'balance' }}
                     >
-                      Your next move.
-                      Our local knowledge.
+                      Your next chapter begins with us.
                     </h1>
                     <p className="font-inter text-base sm:text-lg font-light text-white/80 max-w-xl leading-relaxed">
                       Sales, leasing and property management, with a team based right here in Applecross.
@@ -1084,7 +1105,7 @@ export default function App() {
                   </div>
                   <p className="text-xs text-white/85 leading-relaxed max-w-lg mx-auto">
                     Thank you, {appraisalForm.fullName}. Your appraisal request for{' '}
-                    <strong>{appraisalForm.propertyAddress}</strong> has been received by our Applecross team.
+                    <strong>{appraisalForm.propertyAddress}</strong> has been saved. Our team will be in touch. {enquiryReceipt?.preview && 'Preview only — no email was sent.'}
                   </p>
                   <button
                     type="button"
@@ -1096,8 +1117,9 @@ export default function App() {
                 </div>
               ) : (
                 <form onSubmit={handleAppraisalSubmit} className="mt-8 space-y-4">
+                  <EnquirySpamField />
                   {appraisalError && (
-                    <p className="text-xs text-red-400 bg-red-950/50 border border-red-700 p-3">
+                    <p role="alert" className="text-xs text-white bg-black border border-white/40 p-3">
                       {appraisalError}
                     </p>
                   )}
@@ -1212,9 +1234,10 @@ export default function App() {
                     className="w-full p-3 font-inter text-sm text-[#363636] bg-[#ededed] border border-[#f7f9fa]"
                   />
 
-                  <div className="pt-2 flex justify-center">
-                    <button type="submit" className="zenu-button-outline-light px-10!">
-                      Book an appraisal
+                  <div className="pt-2 flex flex-col items-center gap-3">
+                    <NewsletterOptIn checked={appraisalForm.newsletterOptIn} onChange={checked=>setAppraisalForm({...appraisalForm,newsletterOptIn:checked})}/>
+                    <button type="submit" disabled={appraisalBusy} className="zenu-button-outline-light px-10! disabled:opacity-50">
+                      {appraisalBusy ? 'Submitting…' : 'Book an appraisal'}
                     </button>
                   </div>
                 </form>
@@ -1290,33 +1313,14 @@ export default function App() {
 
         {activePage === 'team-profile' && selectedTeamMember && (
           <TeamMemberProfile key={selectedTeamMember.id} member={selectedTeamMember} listings={listings}
-            onBack={() => navigateTo('team')} onSelectProperty={setSelectedProperty} />
+            onBack={() => navigateTo('team')} onSelectProperty={setSelectedProperty} onSubmitEnquiry={handleAddEnquiry} />
         )}
 
         {/* =================================================================== */}
         {/* VIEW 5: PROPERTY VIDEOS                                             */}
         {/* =================================================================== */}
-        {activePage === 'videos' && (
-          <section className="py-16 px-6 max-w-[1100px] mx-auto space-y-8">
-            <div className="text-center">
-              <h1 className="font-cormorant text-4xl sm:text-5xl font-light text-white">
-                Property Videos
-              </h1>
-              <p className="text-sm text-white/75 mt-2">
-                Cinematic property showcases across Applecross and Greater Perth.
-              </p>
-            </div>
-
-            <div className="aspect-16/9 w-full bg-black overflow-hidden">
-              <iframe
-                src="https://player.vimeo.com/video/1097764829?badge=0&autopause=0&player_id=0&app_id=58479"
-                title="Exceptional Real Estate Property Showcase"
-                className="w-full h-full"
-                allow="autoplay; fullscreen; picture-in-picture"
-              />
-            </div>
-          </section>
-        )}
+        {activePage === 'careers' && <Careers />}
+        {activePage === 'videos' && <VideoLibrary />}
 
         {/* =================================================================== */}
         {/* VIEW 6: DEDICATED BLOGS & MARKET INSIGHTS PAGE                      */}
@@ -1363,7 +1367,7 @@ export default function App() {
                     </h1>
 
                     <div className="space-y-5 pt-2">
-                      {activeBlogPost.content.map((paragraph, idx) => (
+                      {activeBlogPost.bodyHtml ? <div className="rich-document public-rich-text" dangerouslySetInnerHTML={{__html:DOMPurify.sanitize(activeBlogPost.bodyHtml)}} /> : activeBlogPost.content.map((paragraph, idx) => (
                         <p
                           key={idx}
                           className="text-white/85 font-inter font-light leading-relaxed text-base"
@@ -1630,6 +1634,7 @@ export default function App() {
                     Blogs &amp; News
                   </button>
                 </li>
+                <li><button type="button" onClick={() => navigateTo('careers')} className="hover:text-white cursor-pointer">Careers</button></li>
               </ul>
             </div>
 
@@ -1670,6 +1675,7 @@ export default function App() {
       </footer>
 
       {/* PROPERTY DETAIL & ENQUIRY MODAL */}
+      <EnquiryConfirmation receipt={enquiryReceipt} onClose={() => setEnquiryReceipt(null)} />
       <PropertyDetailModal
         property={selectedProperty}
         agents={teamMembers}
