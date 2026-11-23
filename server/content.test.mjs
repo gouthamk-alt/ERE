@@ -28,7 +28,8 @@ async function setup(store = memoryStore()) {
   const mutate = (body, extraHeaders = {}) => handler(new Request('https://demo.example/api/admin/content', {
     method: 'POST', headers: { Cookie, 'Content-Type': 'application/json', ...extraHeaders }, body: JSON.stringify(body),
   }));
-  return { store, handler, read, mutate };
+  const readAdmin = () => handler(new Request('https://demo.example/api/admin/content', { headers: { Cookie } }));
+  return { store, handler, read, readAdmin, mutate };
 }
 
 test('all existing listings and articles pass the publication schema', () => {
@@ -64,9 +65,47 @@ test('public content is shared across cold instances and does not expose enquiri
   const response = await read();
   assert.equal(response.headers.get('cache-control'), 'no-store');
   const first = await response.json();
-  assert.deepEqual(Object.keys(first).sort(), ['blogPosts', 'listings', 'revision', 'teamMembers']);
+  assert.deepEqual(Object.keys(first).sort(), ['blogPosts', 'listings', 'revision', 'teamMembers', 'testimonials']);
   const { read: secondRead } = await setup(store);
   assert.deepEqual(await (await secondRead()).json(), first);
+});
+
+test('testimonial drafts are private; visibility, edits, order and deletion persist', async () => {
+  const store = memoryStore();
+  await store.setJSON('website-content-v1', { ...initialContent, testimonials: [] }, { onlyIfNew: true });
+  const { read, readAdmin, mutate } = await setup(store);
+  const review = { id: 'review-one', clientName: 'Preview client', context: 'Preview only', quote: 'Sample review text.', visible: false, rating: 5 };
+  let data = await (await read()).json();
+  const save = async operation => { const response = await mutate({ ...operation, revision: data.revision }); assert.equal(response.status, 200); data = await response.json(); return data; };
+  await save({ collection: 'testimonials', action: 'add', item: review });
+  assert.deepEqual((await (await read()).json()).testimonials, []);
+  assert.deepEqual((await (await readAdmin()).json()).testimonials, [review]);
+  const auth = createContentHandler({ store: { getWithMetadata: async () => { throw new Error(); } }, authorize: async () => new Response(null, {status:401}) });
+  assert.equal((await auth(new Request('https://demo.example/api/admin/content'))).status, 401);
+  await save({ collection: 'testimonials', action: 'update', item: { ...review, visible: true, quote: 'Edited sample text.' } });
+  await save({ collection: 'testimonials', action: 'add', item: { ...review, id: 'review-two', visible: true, rating: null } });
+  const oldRevision = data.revision;
+  await save({ collection: 'testimonials', action: 'reorder', ids: ['review-one', 'review-two'] });
+  assert.deepEqual((await (await read()).json()).testimonials.map(item => item.id), ['review-one', 'review-two']);
+  assert.equal((await mutate({ collection: 'testimonials', action: 'reorder', ids: ['review-two','review-one'], revision: oldRevision })).status, 409);
+  assert.equal((await mutate({ collection: 'testimonials', action: 'reorder', ids: ['review-one','review-one'], revision: data.revision })).status, 400);
+  await save({ collection: 'testimonials', action: 'delete', id: 'review-one' });
+  assert.deepEqual((await (await read()).json()).testimonials.map(item => item.id), ['review-two']);
+  assert.deepEqual(data.listings, initialContent.listings);
+});
+
+test('testimonial validation rejects blank content, invalid ratings and nonboolean visibility', () => {
+  const item = { id:'review', clientName:'Client', quote:'Review', context:'', rating:null, visible:false };
+  for (const changes of [{ quote:' ' }, { clientName:'' }, { rating:6 }, { rating:2.5 }, { visible:'true' }]) assert.throws(() => validateItem('testimonials', { ...item, ...changes }));
+});
+
+test('imported website testimonials pass validation and intentionally empty collections stay empty', async () => {
+  assert.equal(initialContent.testimonials.length, 51);
+  for (const item of initialContent.testimonials) validateItem('testimonials', item);
+  const store = memoryStore();
+  await store.setJSON('website-content-v1', { ...initialContent, testimonials: [] }, { onlyIfNew: true });
+  const { read } = await setup(store);
+  assert.deepEqual((await (await read()).json()).testimonials, []);
 });
 
 test('unauthenticated and cross-origin writes cannot change published content', async () => {

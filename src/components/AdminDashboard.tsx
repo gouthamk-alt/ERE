@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Plus,
   Search,
@@ -28,13 +28,21 @@ import { MicrosoftEmailSettings } from './MicrosoftEmailSettings';
 import { TeamAdmin } from './TeamAdmin';
 import { RichTextEditor, paragraphsHtml } from './RichTextEditor';
 import { MediaLibrary } from './MediaLibrary';
+import { EnquiryBackups } from './EnquiryBackups';
+import { ContentBackups } from './ContentBackups';
 import { ContactsAdmin } from './ContactsAdmin';
 import { NewslettersAdmin } from './NewslettersAdmin';
+import { TestimonialsAdmin } from './TestimonialsAdmin';
+import type { Testimonial } from '../testimonials';
 import { downloadBrowserBackup, type LegacyContent } from '../legacyContent';
 
 interface AdminDashboardProps {
   listings: PropertyListing[];
   teamMembers: TeamMember[];
+  testimonials: Testimonial[];
+  onSaveTestimonial: (item: Testimonial, existing: boolean) => Promise<boolean>;
+  onDeleteTestimonial: (id: string) => Promise<boolean>;
+  onReorderTestimonials: (ids: string[]) => Promise<boolean>;
   enquiries: ClientEnquiry[];
   blogPosts: BlogPost[];
   onAddListing: (listing: PropertyListing) => Promise<boolean>;
@@ -61,19 +69,19 @@ interface AdminDashboardProps {
 const PRESET_IMAGES = [
   {
     label: '14A Sill Street, Bentley',
-    url: 'https://images.zenu.com.au/600-min/p1jghjdajuju3e1j0u8hps6yc56fpz9c.jpg',
+    url: '/assets/migrated/f0b1cfb1aafd52290743ef20-display.webp',
   },
   {
     label: '15/193 Hay St, East Perth',
-    url: 'https://images.zenu.com.au/600-min/x7938ynr0bbgjrmlw5sfw23e4o57us2t.jpg',
+    url: '/assets/migrated/c636903a23f2ab774ce4eea2-display.webp',
   },
   {
     label: '26D Matheson Rd, Applecross',
-    url: 'https://images.zenu.com.au/s1mtf0lnpl5qwf0f4jcoe0tygnh3ismw.png',
+    url: '/assets/migrated/8d24122e6f1c306c20ec412a-display.webp',
   },
   {
     label: '893 Canning Hwy, Applecross',
-    url: 'https://images.zenu.com.au/d5b1ykdixa3hlcejc5m79vlmgwnpy4pg.png',
+    url: '/assets/migrated/23b5d60fb12bb53179cc40c4-display.webp',
   },
   {
     label: 'Perth Market Report Cover',
@@ -98,7 +106,7 @@ const EMPTY_LISTING_FORM: Omit<PropertyListing, 'id'> = {
   carSpaces: 2,
   landSizeSqm: 480,
   buildingAreaSqm: 240,
-  imageUrl: 'https://images.zenu.com.au/600-min/p1jghjdajuju3e1j0u8hps6yc56fpz9c.jpg',
+  imageUrl: '/assets/migrated/f0b1cfb1aafd52290743ef20-display.webp',
   agentId: 'agent-wendy-chia',
   coAgentId: 'agent-calvin-liew',
   featured: true,
@@ -127,6 +135,10 @@ const EMPTY_BLOG_FORM: Omit<BlogPost, 'id'> = {
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   listings,
   teamMembers,
+  testimonials,
+  onSaveTestimonial,
+  onDeleteTestimonial,
+  onReorderTestimonials,
   enquiries,
   blogPosts,
   onAddListing,
@@ -149,8 +161,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onExitAdmin,
   onLogout,
 }) => {
+  // Mounts only after sign-in; load hidden drafts through the protected content endpoint.
+  useEffect(() => { void onRefreshContent(); }, [onRefreshContent]);
   const [activeSection, setActiveSection] = useState<
-    'inventory' | 'editor' | 'blogs' | 'blog-editor' | 'enquiries' | 'agents' | 'email' | 'media' | 'contacts' | 'newsletters'
+    'inventory' | 'editor' | 'blogs' | 'blog-editor' | 'enquiries' | 'agents' | 'email' | 'media' | 'contacts' | 'newsletters' | 'testimonials' | 'backups'
   >(new URLSearchParams(window.location.search).has('email') ? 'email' : 'inventory');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
@@ -409,9 +423,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <Inbox className="w-4 h-4" />
                 Enquiries & Appraisals
               </span>
-              <span className="tabular-nums">
-                {unreadEnquiriesCount > 0 ? `${unreadEnquiriesCount} new` : enquiries.length}
-              </span>
             </button>
 
             <button
@@ -433,7 +444,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-xs rounded-full border transition-colors ${activeSection === 'email' ? 'bg-white text-black border-white' : 'text-white/80 border-transparent hover:border-white/40'}`}>
               <Inbox className="w-4 h-4" /> Email notifications
             </button>
-            {(['media','contacts','newsletters'] as const).map(section=><button key={section} type="button" onClick={()=>setActiveSection(section)} className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-xs rounded-full border ${activeSection===section?'bg-white text-black border-white':'text-white/80 border-transparent hover:border-white/40'}`}><FileText className="w-4 h-4"/>{section==='media'?'Media & fonts':section==='contacts'?'Contacts & CSV':'Newsletters'}</button>)}
+            {(['media','contacts','newsletters','testimonials','backups'] as const).map(section=><button key={section} type="button" onClick={()=>setActiveSection(section)} className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-xs rounded-full border ${activeSection===section?'bg-white text-black border-white':'text-white/80 border-transparent hover:border-white/40'}`}><FileText className="w-4 h-4"/>{section==='media'?'Media & fonts':section==='contacts'?'Contacts & CSV':section==='testimonials'?'Testimonials':section==='backups'?'Content backups':'Newsletters'}</button>)}
           </nav>
         </div>
 
@@ -483,6 +494,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {activeSection === 'contacts' && 'Private Contacts'}
               {activeSection === 'newsletters' && 'Newsletters & Campaigns'}
               {activeSection === 'agents' && 'Team Directory'}
+              {activeSection === 'testimonials' && 'Client Testimonials'}
+              {activeSection === 'backups' && 'Content Backups'}
             </span>
           </div>
 
@@ -533,10 +546,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </p>
           </div>
           <div className="px-6 py-4">
-            <p className="text-xs text-white/60">Client Enquiries</p>
-            <p className="text-2xl font-cormorant text-white tabular-nums mt-1">
-              {enquiries.length}
-            </p>
+            <p className="text-xs text-white/60">Saved Website Enquiries</p>
+            <button type="button" className="underline text-sm mt-3" onClick={()=>setActiveSection('enquiries')}>Open enquiry inbox</button>
           </div>
         </div>
 
@@ -1329,61 +1340,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* =============================================================== */}
           {/* SECTION 5: ENQUIRIES                                            */}
           {/* =============================================================== */}
-          {activeSection === 'enquiries' && (
-            <div className="max-w-[1200px] mx-auto bg-[#000000] border border-[#c6c6c6]/30 p-6 sm:p-8">
-              <h3 className="font-cormorant text-3xl font-light text-white">
-                Submitted Enquiries & Appraisal Requests
-              </h3>
-              <div className="mt-6 divide-y divide-[#302f2f]">
-                {enquiries.map((enq) => (
-                  <div
-                    key={enq.id}
-                    className="py-5 flex flex-col md:flex-row md:items-start justify-between gap-4"
-                  >
-                    <div className="space-y-1.5 max-w-2xl">
-                      <div className="flex items-center gap-2 text-xs text-white/60">
-                        <span className="text-white font-medium">{enq.type}</span>
-                        <span>·</span>
-                        <span className="tabular-nums">{enq.createdAt}</span>
-                        <span>·</span>
-                        <span>Status: {enq.status}</span>
-                      </div>
-                      <p className="text-sm font-medium text-white">
-                        {enq.clientName} ({enq.email} · {enq.phone})
-                      </p>
-                      {(enq.propertyTitle || enq.suburbOrAddress) && (
-                        <p className="text-xs text-white/80">
-                          Property: {enq.propertyTitle || enq.suburbOrAddress}
-                        </p>
-                      )}
-                      <p className="text-xs text-white/70 leading-relaxed pt-1">
-                        “{enq.message}”
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={enq.status}
-                        onChange={(e) => {
-                          onUpdateEnquiryStatus(
-                            enq.id,
-                            e.target.value as ClientEnquiry['status']
-                          );
-                          showToast(`Updated status for ${enq.clientName}`);
-                        }}
-                        className="text-xs bg-[#302f2f] border border-[#c6c6c6]/40 px-3 py-1.5 text-white"
-                      >
-                        <option value="New">New</option>
-                        <option value="Contacted">Contacted</option>
-                        <option value="Scheduled">Scheduled</option>
-                        <option value="Archived">Archived</option>
-                      </select>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {activeSection === 'enquiries' && <EnquiryBackups />}
 
           {/* =============================================================== */}
           {/* SECTION 6: TEAM                                                 */}
@@ -1392,7 +1349,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {activeSection === 'email' && <MicrosoftEmailSettings />}
           {activeSection === 'media' && <MediaLibrary />}
           {activeSection === 'contacts' && <ContactsAdmin />}
+          {activeSection === 'backups' && <ContentBackups onRefresh={onRefreshContent} />}
           {activeSection === 'newsletters' && <NewslettersAdmin />}
+          {activeSection === 'testimonials' && <TestimonialsAdmin items={testimonials} onSave={onSaveTestimonial} onDelete={onDeleteTestimonial} onReorder={onReorderTestimonials} />}
         </main>
       </div>
       </fieldset>

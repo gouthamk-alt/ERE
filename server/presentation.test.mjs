@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { displayPropertyPrice } from '../src/propertyPresentation.ts';
+import { testimonialStart } from '../src/testimonials.ts';
+
+test('public sections start with distinct testimonials when enough reviews exist', () => {
+  const pages = ['home','listings','list-with-us','team','team-profile','careers','videos','blog'];
+  assert.equal(new Set(pages.map(page => testimonialStart(page, 8))).size, 8);
+  assert.equal(testimonialStart('home', 0), 0);
+  assert.equal(testimonialStart('blog:article-one', 1), 0);
+});
 
 test('residential weekly rents use grouped amounts and a clear time period', () => {
   for (const priceDisplay of ['$1550', '$1,550', '$1,550 pw', '$1550/week', '$1,550 per week']) {

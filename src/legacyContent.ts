@@ -1,5 +1,6 @@
 import { INITIAL_LISTINGS, INITIAL_BLOG_POSTS } from './data/initialData';
 import type { BlogPost, PropertyListing } from './data/initialData';
+import imageMigration from '../server/image-migration.json';
 
 export type LegacyContent = { listings: PropertyListing[]; blogPosts: BlogPost[] };
 const canonical = (value: unknown) => JSON.stringify(value, (_key, item) => item && typeof item === 'object' && !Array.isArray(item)
@@ -9,10 +10,11 @@ export function getBrowserEdits() {
   try {
     const listings = JSON.parse(localStorage.getItem('exceptional_re_zenu_listings_v3') || 'null');
     const blogPosts = JSON.parse(localStorage.getItem('exceptional_re_zenu_blogs_v3') || 'null');
-    const data: LegacyContent = {
+    let data: LegacyContent = {
       listings: Array.isArray(listings) ? listings : INITIAL_LISTINGS,
       blogPosts: Array.isArray(blogPosts) ? blogPosts : INITIAL_BLOG_POSTS,
     };
+    let migrated=JSON.stringify(data);for(const [old,url] of Object.entries(imageMigration))migrated=migrated.split(old).join(url);data=JSON.parse(migrated);
     const changes: string[] = [];
     for (const [collection, original] of [['listings', INITIAL_LISTINGS], ['blogPosts', INITIAL_BLOG_POSTS]] as const) {
       const before = new Map<string, PropertyListing | BlogPost>(original.map((item) => [item.id, item]));

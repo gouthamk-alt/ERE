@@ -10,6 +10,7 @@ import { createLocalEnquiryStore } from './local-enquiry-store.mjs';
 import { createMicrosoftConnection } from './microsoft-email.mjs';
 import { createMediaHandler } from './media.mjs';
 import { createMarketingService } from './marketing.mjs';
+import { createContentBackups } from './content-backups.mjs';
 
 const app = express();
 const production = process.env.NODE_ENV === 'production';
@@ -29,11 +30,12 @@ installAdminAuth(app, {
   secure: production,
 });
 const content = createContentHandler({
+  backups:createContentBackups(createLocalEnquiryStore(path.join(root,'.ere-data','content-backups'))),
   store: createLocalContentStore(path.join(root, '.ere-data')),
   // /api/admin requests have already passed installAdminAuth above.
   authorize: async () => null,
 });
-app.all(['/api/content', '/api/admin/content'], async (req, res) => {
+app.all(['/api/content', '/api/admin/content', '/api/admin/backups'], async (req, res) => {
   const request = new Request(`${req.protocol}://${req.get('host')}${req.originalUrl}`, {
     method: req.method,
     headers: Object.fromEntries(Object.entries(req.headers).filter(([, value]) => typeof value === 'string')),

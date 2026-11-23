@@ -41,6 +41,7 @@ import { EnquiryConfirmation } from './components/EnquiryConfirmation';
 import { EnquirySpamField } from './components/EnquirySpamField';
 import DOMPurify from 'dompurify';
 import { NewsletterOptIn } from './components/NewsletterOptIn';
+import { TestimonialsCarousel } from './components/TestimonialsCarousel';
 
 const AdminDashboard = lazy(() => import('./components/AdminDashboard').then((module) => ({ default: module.AdminDashboard })));
 
@@ -57,7 +58,7 @@ type ActivePage =
 const STORAGE_KEY_ENQUIRIES = 'exceptional_re_zenu_enquiries_v3';
 
 export default function App() {
-  const { listings, blogPosts, teamMembers, ready: contentReady, error: contentError, saving, refresh: refreshContent, save: saveContent, browserEdits, importBrowserEdits } = useWebsiteContent();
+  const { listings, blogPosts, teamMembers, testimonials, ready: contentReady, error: contentError, saving, refresh: refreshContent, save: saveContent, browserEdits, importBrowserEdits } = useWebsiteContent();
 
   const [enquiries, setEnquiries] = useState<ClientEnquiry[]>(() => {
     try {
@@ -312,6 +313,10 @@ export default function App() {
         <AdminDashboard
           listings={listings}
           teamMembers={teamMembers}
+          testimonials={testimonials}
+          onSaveTestimonial={(item, existing) => saveContent({collection:'testimonials',action:existing?'update':'add',item})}
+          onDeleteTestimonial={id=>saveContent({collection:'testimonials',action:'delete',id})}
+          onReorderTestimonials={ids=>saveContent({collection:'testimonials',action:'reorder',ids})}
           enquiries={enquiries}
           blogPosts={blogPosts}
           onAddListing={handleAddListing}
@@ -1514,6 +1519,7 @@ export default function App() {
             )}
           </section>
         )}
+        <TestimonialsCarousel key={`${activePage}:${selectedTeamMemberId || ''}:${selectedBlogPostId || ''}:${selectedCategory}`} items={testimonials} page={`${activePage}:${activePage === 'team-profile' ? selectedTeamMemberId || '' : activePage === 'blog' ? selectedBlogPostId || '' : activePage === 'listings' && selectedCategory !== 'ALL' ? selectedCategory : ''}`} />
       </main>
 
       {/* =================================================================== */}

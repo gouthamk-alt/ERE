@@ -109,7 +109,6 @@ export function createEnquiryService({ store, sender, preview = false, now = Dat
     if (request.method !== 'POST') return json({ error: 'Not found.' }, 405, { Allow: 'POST' });
     if (request.headers.get('origin') !== new URL(request.url).origin || !request.headers.get('content-type')?.startsWith('application/json')) return json({ error: 'Request not allowed.' }, 403);
     try {
-      if (!preview && !sender.ready && new URL(request.url).pathname!=='/api/enquiries/subscribe') return json({ error: 'Online enquiries are temporarily unavailable. Please email sales@exceptionalrealestate.com.au.' }, 503);
       if (Number(request.headers.get('content-length')) > 14000) return json({ error: 'Your message is too long.' }, 413);
       let raw = '', size = 0;
       const decoder = new TextDecoder();
@@ -177,12 +176,18 @@ export function createEnquiryService({ store, sender, preview = false, now = Dat
     const day = new URL(request.url).searchParams.get('day') || date(now());
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return json({ error: 'Invalid date.' }, 400);
     const listing = await store.list({ prefix: `requests/${day}/` });
+    const offset=Number(new URL(request.url).searchParams.get('offset')||0);
+    if(!Number.isSafeInteger(offset)||offset<0)return json({error:'Invalid page.'},400);
+    listing.blobs.sort((a,b)=>b.key.localeCompare(a.key));
     const records = [];
-    for (const blob of listing.blobs.slice(0, 100)) {
+    for (const blob of listing.blobs.slice(offset, offset+100)) {
       const entry = await get(blob.key);
-      if (entry) records.push(entry.data);
+      if (entry) {
+        const { id,reference,createdAt,enquiry,delivery }=entry.data;
+        records.push({id,reference,createdAt,enquiry,delivery:{status:delivery.status,attempts:delivery.attempts},notificationConfigured:sender.ready});
+      }
     }
-    return json({ records, day, truncated: listing.blobs.length > 100 });
+    return json({ records:records.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)), day, offset, total:listing.blobs.length, truncated:offset+100<listing.blobs.length, notificationConfigured:sender.ready, preview });
   }
   return { submit, retryPending, inspect };
 }

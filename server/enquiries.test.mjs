@@ -102,10 +102,26 @@ test('does not retry ambiguous email acceptance outside the safe retry window', 
   assert.equal(records(store)[0].delivery.status, 'review');
 });
 
-test('production fails closed when sending is not configured', async () => {
+test('production keeps a durable enquiry even before email is configured', async () => {
   const { store, service } = setup({ sender: createEmailSender() });
-  assert.equal((await service.submit(post(input()))).status, 503);
-  assert.equal(records(store).length, 0);
+  assert.equal((await service.submit(post(input()))).status, 201);
+  assert.equal(records(store).length, 1);
+  assert.equal(records(store)[0].delivery.status, 'pending');
+});
+
+test('admin enquiry pages omit internal tokens and support all saved records across pages', async () => {
+  const {store,service}=setup({authorize:async()=>null});
+  await service.submit(post(input({newsletterOptIn:true})),{ip:'preview'});
+  const saved=records(store)[0];
+  assert.ok(saved.newsletterToken);
+  for(let index=0;index<104;index++)await store.setJSON(`requests/2026-11-20/${fixed}-${String(index).padStart(6,'0')}`,{...saved,id:`fixture-${index}`});
+  const inspect=offset=>service.inspect(new Request(`https://example.com/api/admin/enquiries?day=2026-11-20&offset=${offset}`));
+  const first=await (await inspect(0)).json(),second=await (await inspect(100)).json();
+  assert.equal(first.records.length,100);assert.equal(first.total,105);assert.equal(first.truncated,true);
+  assert.equal(second.records.length,5);assert.equal(second.truncated,false);
+  assert.equal(new Set([...first.records,...second.records].map(item=>item.id)).size,105);
+  for(const record of first.records){assert.equal(record.newsletterToken,undefined);assert.equal(record.fingerprint,undefined);assert.equal(record.delivery.providerId,undefined);}
+  assert.equal((await inspect(-1)).status,400);
 });
 
 test('preview stores a labelled test without using the sending provider', async () => {
