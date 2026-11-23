@@ -321,6 +321,7 @@ export default function App() {
           onUpdateBlogPost={handleUpdateBlogPost}
           onSaveTeamMember={(item, existing) => saveContent({collection:'teamMembers',action:existing?'update':'add',item})}
           onDeleteTeamMember={id=>saveContent({collection:'teamMembers',action:'delete',id})}
+          onReorderTeamMembers={ids=>saveContent({collection:'teamMembers',action:'reorder',ids})}
           onDeleteBlogPost={handleDeleteBlogPost}
           onUpdateEnquiryStatus={handleUpdateEnquiryStatus}
           onRefreshContent={refreshContent}

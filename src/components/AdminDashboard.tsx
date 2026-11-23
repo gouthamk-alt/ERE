@@ -44,6 +44,7 @@ interface AdminDashboardProps {
   onUpdateBlogPost: (post: BlogPost) => Promise<boolean>;
   onDeleteBlogPost: (id: string) => Promise<boolean>;
   onSaveTeamMember: (member: TeamMember, existing: boolean) => Promise<boolean>;
+  onReorderTeamMembers: (ids: string[]) => Promise<boolean>;
   onDeleteTeamMember: (id: string) => Promise<boolean>;
   onUpdateEnquiryStatus: (id: string, status: ClientEnquiry['status']) => void;
   onRefreshContent: () => Promise<boolean>;
@@ -135,6 +136,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onUpdateBlogPost,
   onDeleteBlogPost,
   onSaveTeamMember,
+  onReorderTeamMembers,
   onDeleteTeamMember,
   onUpdateEnquiryStatus,
   onRefreshContent,
@@ -1386,7 +1388,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* =============================================================== */}
           {/* SECTION 6: TEAM                                                 */}
           {/* =============================================================== */}
-          {activeSection === 'agents' && <TeamAdmin members={teamMembers} onSave={onSaveTeamMember} onDelete={onDeleteTeamMember} />}
+          {activeSection === 'agents' && <TeamAdmin members={teamMembers} onSave={onSaveTeamMember} onDelete={onDeleteTeamMember} onReorder={onReorderTeamMembers} />}
           {activeSection === 'email' && <MicrosoftEmailSettings />}
           {activeSection === 'media' && <MediaLibrary />}
           {activeSection === 'contacts' && <ContactsAdmin />}

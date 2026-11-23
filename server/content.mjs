@@ -138,9 +138,18 @@ export function createContentHandler({ store, authorize }) {
       if (raw.length > 3000000) return json({ error: 'Content is too large.' }, 413);
       let input;
       try { input = JSON.parse(raw); } catch { return json({ error: 'Invalid request.' }, 400); }
-      if (!input || (input.action !== 'import' && (!Object.hasOwn(fields, input.collection) || !['add', 'update', 'delete'].includes(input.action)))) return json({ error: 'Invalid content operation.' }, 400);
+      if (!input || (input.action !== 'import' && !(input.action === 'reorder' && input.collection === 'teamMembers') && (!Object.hasOwn(fields, input.collection) || !['add', 'update', 'delete'].includes(input.action)))) return json({ error: 'Invalid content operation.' }, 400);
       const entry = await read();
       if (typeof input.revision !== 'string' || input.revision !== entry.etag) return json({ error: 'The website content changed in another session. Reload the latest content, review your edit and try again.', conflict: true }, 409);
+      if (input.action === 'reorder') {
+        const members = entry.data.teamMembers;
+        const byId = new Map(members.map(member => [member.id, member]));
+        if (!Array.isArray(input.ids) || input.ids.length !== members.length || new Set(input.ids).size !== members.length || input.ids.some(id => !byId.has(id))) return json({ error: 'Include every team member exactly once when changing the order.' }, 400);
+        const data = { ...entry.data, teamMembers: input.ids.map(id => byId.get(id)) };
+        const result = await store.setJSON(KEY, data, { onlyIfMatch: entry.etag });
+        if (!result.modified) return json({ error: 'Another edit was saved. Reload the latest content before changing the order.', conflict: true }, 409);
+        return json({ ...data, revision: result.etag });
+      }
       if (input.action === 'import') {
         let data;
         try { data = mergeLegacyContent(entry.data, input.legacy); } catch (error) { return json({ error: error.message }, error.message.startsWith('Import conflict:') ? 409 : 400); }

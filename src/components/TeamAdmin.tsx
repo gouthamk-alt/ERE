@@ -4,8 +4,21 @@ import type { TeamMember } from '../data/initialData';
 import { MediaLibrary } from './MediaLibrary';
 
 const empty = (): TeamMember => ({ id: crypto.randomUUID(), name: '', role: '', qualification: '', phone: '', email: '', photoUrl: '', languages: [], specialties: [], bio: '', activeListingsCount: 0, soldCount12Months: 0, initials: '' });
-export function TeamAdmin({ members, onSave, onDelete }: { members: TeamMember[]; onSave: (member: TeamMember, existing: boolean) => Promise<boolean>; onDelete: (id: string) => Promise<boolean> }) {
+export function TeamAdmin({ members, onSave, onDelete, onReorder }: { members: TeamMember[]; onSave: (member: TeamMember, existing: boolean) => Promise<boolean>; onDelete: (id: string) => Promise<boolean>; onReorder: (ids: string[]) => Promise<boolean> }) {
   const [form, setForm] = useState<TeamMember | null>(null), [existing, setExisting] = useState(false), [busy, setBusy] = useState(false), [media, setMedia] = useState(false), [error, setError] = useState('');
+  const [orderStatus, setOrderStatus] = useState('');
+  async function moveMember(index: number, offset: number) {
+    const target = index + offset;
+    if (busy || target < 0 || target >= members.length) return;
+    const ids = members.map(member => member.id);
+    [ids[index], ids[target]] = [ids[target], ids[index]];
+    setBusy(true); setError(''); setOrderStatus('Saving team order…');
+    try {
+      if (await onReorder(ids)) setOrderStatus('Team order saved.');
+      else { setError('Team order was not saved. Check the content message above and try again.'); setOrderStatus(''); }
+    } catch { setError('Team order could not be saved. Please try again.'); setOrderStatus(''); }
+    finally { setBusy(false); }
+  }
   if (form) return <section className="max-w-4xl space-y-5"><h2 className="text-2xl font-bold">{existing ? 'Edit team member' : 'Add team member'}</h2>
     <form className="grid sm:grid-cols-2 gap-5" onSubmit={async e => { e.preventDefault(); setBusy(true); try { if (await onSave({ ...form, initials: form.initials || form.name.split(' ').map(word => word[0]).slice(0,2).join('') }, existing)) setForm(null); } finally { setBusy(false); } }}>
       {(['name','role','qualification','phone','email','initials','activeListingsCount','soldCount12Months'] as const).map(key => <label key={key} className="admin-label">{{name:'Name',role:'Role',qualification:'Qualifications',phone:'Phone',email:'Email',initials:'Initials',activeListingsCount:'Active listing count',soldCount12Months:'Sales in last 12 months'}[key]}<input className="admin-input" required={['name','role','email'].includes(key)} type={key === 'email' ? 'email' : typeof form[key] === 'number' ? 'number' : 'text'} min={0} value={form[key]} onChange={e => setForm({ ...form, [key]: typeof form[key] === 'number' ? Number(e.target.value) : e.target.value })} /></label>)}
@@ -17,5 +30,9 @@ export function TeamAdmin({ members, onSave, onDelete }: { members: TeamMember[]
       <div className="sm:col-span-2 flex gap-3"><button disabled={busy} className="admin-action">{busy?'Saving…':'Save team member'}</button><button type="button" onClick={()=>setForm(null)} className="underline">Cancel</button></div>
     </form></section>;
   return <section className="space-y-6"><div className="flex justify-between items-center gap-4"><h2 className="text-2xl font-bold">Our team</h2><button className="admin-action" onClick={()=>{setForm(empty());setExisting(false);setError('');}}>Add team member</button></div>
-    {error && <p role="alert">{error}</p>}<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">{members.map(member=><article key={member.id} className="border border-white/20 p-5 space-y-3">{member.photoUrl&&<img src={member.photoUrl} alt={member.name} className="w-full aspect-[4/3] object-cover object-top"/>}<h3 className="text-xl font-bold">{member.name}</h3><p className="text-sm opacity-70">{member.role}</p><p className="text-sm break-all">{member.email}</p><div className="flex gap-5"><button className="underline" onClick={()=>{setForm(member);setExisting(true);setMedia(false);}}>Edit {member.name}</button><ConfirmAction label="Delete" message={`Delete ${member.name}’s profile?`} onConfirm={async()=>{if(!await onDelete(member.id))setError('Profile was not deleted. Check the content error above.');}}/></div></article>)}</div></section>;
+    <p className="text-sm text-white/70">Use Move up or Move down to set the website order. The first four members appear on the homepage.</p>
+    <p role="status" className="text-sm" aria-live="polite">{orderStatus}</p>
+    {error && <p role="alert">{error}</p>}<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">{members.map((member,index)=><article key={member.id} className="border border-white/20 p-5 space-y-3">{member.photoUrl&&<img src={member.photoUrl} alt={member.name} className="w-full aspect-[4/3] object-cover object-top"/>}<h3 className="text-xl font-bold">{member.name}</h3><p className="text-sm opacity-70">{member.role}</p><p className="text-sm break-all">{member.email}</p>
+      <div className="flex flex-wrap items-center gap-3 border-t border-white/15 pt-3"><span className="text-sm text-white/60">Position {index+1}</span><button type="button" aria-label={`Move ${member.name} up`} disabled={busy||index===0} onClick={()=>void moveMember(index,-1)} className="border border-white/30 px-3 py-2 text-sm disabled:opacity-35">Move up</button><button type="button" aria-label={`Move ${member.name} down`} disabled={busy||index===members.length-1} onClick={()=>void moveMember(index,1)} className="border border-white/30 px-3 py-2 text-sm disabled:opacity-35">Move down</button></div>
+      <div className="flex gap-5"><button disabled={busy} className="underline disabled:opacity-35" onClick={()=>{setForm(member);setExisting(true);setMedia(false);}}>Edit {member.name}</button>{!busy&&<ConfirmAction label="Delete" message={`Delete ${member.name}’s profile?`} onConfirm={async()=>{if(!await onDelete(member.id))setError('Profile was not deleted. Check the content error above.');}}/>}</div></article>)}</div></section>;
 }

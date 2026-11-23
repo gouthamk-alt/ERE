@@ -35,6 +35,30 @@ test('all existing listings and articles pass the publication schema', () => {
   for (const collection of ['listings', 'blogPosts']) for (const item of initialContent[collection]) validateItem(collection, item);
 });
 
+test('team reordering persists for another reader without changing profiles or listings', async () => {
+  const { store, read, mutate } = await setup();
+  const before = await (await read()).json();
+  const ids = before.teamMembers.map(member => member.id).reverse();
+  const response = await mutate({ collection: 'teamMembers', action: 'reorder', ids, revision: before.revision });
+  assert.equal(response.status, 200);
+  const after = await (await (await setup(store)).read()).json();
+  assert.deepEqual(after.teamMembers, [...before.teamMembers].reverse());
+  assert.deepEqual(after.listings, before.listings);
+  assert.deepEqual(after.blogPosts, before.blogPosts);
+  assert.equal((await mutate({ collection: 'teamMembers', action: 'reorder', ids: [...ids].reverse(), revision: before.revision })).status, 409);
+});
+
+test('team reordering rejects missing, duplicate, unknown IDs and unsupported collections', async () => {
+  const { read, mutate } = await setup();
+  const before = await (await read()).json();
+  const ids = before.teamMembers.map(member => member.id);
+  for (const invalid of [ids.slice(1), [...ids.slice(1), ids[1]], [...ids.slice(1), 'unknown']]) {
+    assert.equal((await mutate({ collection: 'teamMembers', action: 'reorder', ids: invalid, revision: before.revision })).status, 400);
+  }
+  assert.equal((await mutate({ collection: 'listings', action: 'reorder', ids, revision: before.revision })).status, 400);
+  assert.deepEqual(await (await read()).json(), before);
+});
+
 test('public content is shared across cold instances and does not expose enquiries or sessions', async () => {
   const { store, read } = await setup();
   const response = await read();

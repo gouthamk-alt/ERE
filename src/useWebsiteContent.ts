@@ -4,6 +4,7 @@ import { getBrowserEdits, markBrowserEditsImported, type LegacyContent } from '.
 
 type Content = { listings: PropertyListing[]; blogPosts: BlogPost[]; teamMembers: TeamMember[]; revision: string };
 type Operation = { collection: 'listings' | 'blogPosts' | 'teamMembers'; action: 'add' | 'update' | 'delete'; item?: PropertyListing | BlogPost | TeamMember; id?: string }
+  | { collection: 'teamMembers'; action: 'reorder'; ids: string[] }
   | { action: 'import'; legacy: LegacyContent };
 async function readResponse(response: Response): Promise<Content> {
   let data;
