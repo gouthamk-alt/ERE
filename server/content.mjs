@@ -136,7 +136,7 @@ export function validateItem(collection, value) {
 }
 
 // The store exposes strong reads and compare-and-set writes. ETags prevent lost edits.
-export function createContentHandler({ store, authorize, backups }) {
+export function createContentHandler({ store, authorize, backups, autoPublishZenuImport = false }) {
   if(backups)store=withContentBackups(store,backups);
   async function read() {
     let entry = await store.getWithMetadata(KEY, { type: 'json' });
@@ -149,6 +149,18 @@ export function createContentHandler({ store, authorize, backups }) {
     if (!Array.isArray(entry.data.teamMembers)) entry.data.teamMembers = structuredClone(teamSeed);
     if (!Array.isArray(entry.data.testimonials)) entry.data.testimonials = structuredClone(testimonialsSeed);
     entry.data=migrateImageUrls(entry.data);
+    // Production release migration: the first content read publishes the prepared
+    // collection only if every live listing still matches the reviewed baseline.
+    if (autoPublishZenuImport && canonical(entry.data.listings) === canonical(zenuBaseline)) {
+      const listings = zenuListings.map(item => validateItem('listings', item));
+      if (new Set(listings.map(item => item.id)).size !== listings.length || listings.some(item => !entry.data.teamMembers.some(member => member.id === item.agentId) || (item.coAgentId && !entry.data.teamMembers.some(member => member.id === item.coAgentId)))) throw new Error('Prepared listings failed validation');
+      const data = { ...entry.data, listings };
+      if (JSON.stringify(data).length > 3000000) throw new Error('Prepared content is too large');
+      await store.setJSON(KEY, data, { onlyIfMatch: entry.etag });
+      entry = await store.getWithMetadata(KEY, { type: 'json' });
+      if (!entry) throw new Error('Storage unavailable after import');
+      entry.data = migrateImageUrls(entry.data);
+    }
     return entry;
   }
   return async (request, context = {}) => {

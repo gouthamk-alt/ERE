@@ -65,6 +65,17 @@ test('protected Zenu publication replaces only the unchanged baseline listings',
   assert.equal((await mutate({ action: 'publishZenuImport', revision: before.revision })).status, 409);
 });
 
+test('production content read publishes the reviewed Zenu collection once', async () => {
+  const store = memoryStore();
+  await store.setJSON('website-content-v1', { ...initialContent, listings: zenuBaseline }, { onlyIfNew: true });
+  const handler = createContentHandler({ store, authorize: async () => null, autoPublishZenuImport: true });
+  const first = await (await handler(new Request('https://demo.example/api/content'))).json();
+  assert.equal(first.listings.length, 99);
+  assert.deepEqual(first.listings, zenuListings);
+  const second = await (await handler(new Request('https://demo.example/api/content'))).json();
+  assert.equal(second.revision, first.revision);
+});
+
 test('Zenu publication rejects changed live listings without partial writes', async () => {
   const store = memoryStore();
   await store.setJSON('website-content-v1', { ...initialContent, listings: [{ ...zenuBaseline[0], title: 'New live edit' }, ...zenuBaseline.slice(1)] }, { onlyIfNew: true });

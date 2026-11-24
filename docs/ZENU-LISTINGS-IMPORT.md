@@ -14,7 +14,7 @@ The local `.ere-data/content.json` preview combines these listings with the live
 
 ## Release requirement
 
-Pushing source code alone does not replace listings already saved in production Netlify Blobs. After deployment, an authenticated office admin can use **Publish 99 Zenu listings** in the listing admin screen. This action validates all 99 records, checks the current live listing collection against `staged/zenu-live-listings-baseline.json`, and refuses to replace it if any listing changed. The existing content backup wrapper snapshots the old state before the revision-checked write. Blogs, team profiles, testimonials, enquiries and contacts remain untouched. The button disappears after successful publication.
+Pushing source code alone does not replace listings already saved in production Netlify Blobs. The deployed Netlify content function performs a one-time import on its first content read. It validates all 99 records, checks the current live listing collection against `staged/zenu-live-listings-baseline.json`, and refuses to replace it if any listing changed. The existing content backup wrapper snapshots the old state before the revision-checked write. Blogs, team profiles, testimonials, enquiries and contacts remain untouched. An authenticated office admin also has a **Publish 99 Zenu listings** button as a fallback; it disappears after successful publication.
 
 ## Rebuild local preview
 
