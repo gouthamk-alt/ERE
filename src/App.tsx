@@ -350,21 +350,12 @@ export default function App() {
     );
   }
 
-  if (!contentReady) return (
-    <main className="min-h-screen bg-[#000000] text-white grid place-items-center px-6 text-center">
-      <div><h1 className="font-cormorant text-3xl mb-4">Exceptional Real Estate</h1>
-        <p role={contentError ? 'alert' : 'status'}>{contentError || 'Loading properties and articles…'}</p>
-        {contentError && <button onClick={() => void refreshContent()} className="zenu-button mt-5">Try again</button>}
-      </div>
-    </main>
-  );
-
   return (
     <div className="public-site min-h-screen flex flex-col bg-[#000000] text-white font-inter">
       {/* =================================================================== */}
       {/* ARCHITECTURAL HEADER (Gradient-to-Black Glass Bar)                  */}
       {/* =================================================================== */}
-      {contentError && <div role="alert" className="bg-[#302f2f] px-6 py-3 text-sm">Unable to refresh website content. <button className="underline" onClick={() => void refreshContent()}>Try again</button></div>}
+      {contentError && <div role="alert" className="bg-[#302f2f] px-6 py-3 text-sm">Properties and articles are temporarily unavailable. <button className="underline" onClick={() => void refreshContent()}>Try again</button></div>}
       <header className="sticky top-0 z-40 h-20 bg-[#000000]/95 backdrop-blur-md text-white px-6 lg:px-12">
         <div className="max-w-[1320px] h-full mx-auto flex items-center justify-between gap-6">
           {/* Zone 1: Original Exceptional Real Estate Logo */}
@@ -843,22 +834,26 @@ export default function App() {
                 </div>
 
                 {/* 3-Column Architectural Grid (Six properties by default) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" aria-busy={!contentReady}>
+                  {!contentReady && !contentError && Array.from({ length: 6 }, (_, index) => (
+                    <div key={index} aria-hidden="true" className="min-h-[420px] bg-[#171717]">
+                      <div className="aspect-[4/3] bg-[#252525]" />
+                      <div className="space-y-4 p-5"><div className="h-3 w-24 bg-[#303030]" /><div className="h-6 w-3/4 bg-[#303030]" /><div className="h-4 w-1/3 bg-[#303030]" /></div>
+                    </div>
+                  ))}
                   {homeDisplayedListings.map((property) => (
                     <PropertyCard key={property.id} property={property}
                       agentName={teamMembers.find((agent) => agent.id === property.agentId)?.name}
                       onSelect={setSelectedProperty} />
                   ))}
-                  {homeDisplayedListings.length === 0 && (
+                  {contentReady && homeDisplayedListings.length === 0 && (
                     <p className="col-span-full py-12 text-white/60">No properties match your search. Try another suburb or change your filters.</p>
                   )}
                 </div>
 
                 {/* Show More / View Full Directory Footer Bar (No Add/Edit buttons on public site) */}
                 <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <p className="text-xs text-white/60">
-                    Showing {homeDisplayedListings.length} of {filteredListings.length} properties.
-                  </p>
+                  <p className="text-xs text-white/60">{contentReady ? `Showing ${homeDisplayedListings.length} of ${filteredListings.length} properties.` : 'Explore our current properties'}</p>
                   <div className="flex flex-wrap items-center gap-3">
                     <button type="button" onClick={() => navigateTo('listings')} className="zenu-button inline-flex gap-2">
                       View all properties <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
@@ -879,7 +874,10 @@ export default function App() {
                   </div>
                   <button type="button" onClick={() => navigateTo('team')} className="accent-link inline-flex items-center gap-2 text-sm cursor-pointer">Meet our full team <ArrowUpRight className="w-4 h-4" aria-hidden="true" /></button>
                 </div>
-                <div className="home-team-grid grid grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-8">
+                <div className="home-team-grid grid grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-8" aria-busy={!contentReady}>
+                  {!contentReady && !contentError && Array.from({ length: 4 }, (_, index) => (
+                    <div key={index} aria-hidden="true"><div className="aspect-4/5 bg-[#202020]" /><div className="mt-4 h-5 w-2/3 bg-[#303030]" /><div className="mt-3 h-3 w-1/2 bg-[#303030]" /></div>
+                  ))}
                   {teamMembers.slice(0, 4).map((member) => (
                     <button type="button" key={member.id} onClick={() => openTeamMember(member.id)} aria-label={`View ${member.name}’s profile`} className="home-team-person text-left cursor-pointer group">
                       <div className="aspect-4/5 bg-black overflow-hidden">
@@ -901,6 +899,7 @@ export default function App() {
             </section>
 
             {/* 4. Full-width commercial spotlight. */}
+            {!contentReady && !contentError && <div aria-hidden="true" className="min-h-[500px] bg-[#171717]" />}
             {commercialListings[0] && (
               <section className="commercial-band relative isolate overflow-hidden" aria-labelledby="commercial-heading">
                 <PropertyImage src={commercialListings[0].imageUrl} alt={commercialListings[0].title} className="absolute inset-0 w-full h-full object-cover" />
@@ -922,6 +921,7 @@ export default function App() {
             <section className="bg-[#000000] py-20 sm:py-28 px-6">
               <div className="max-w-[1200px] mx-auto">
                 {/* From our team Magazine Card */}
+                {!contentReady && !contentError && <div aria-hidden="true" className="h-[340px] bg-[#171717]" />}
                 {latestBlogHighlight && (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
@@ -984,9 +984,7 @@ export default function App() {
                   {selectedCategory === 'ALL' ? 'Current Listings' : selectedCategory}
                 </h1>
               </div>
-              <p className="text-xs text-white/65 font-inter">
-                Showing {filteredListings.length} of {listings.length} properties across Greater Perth
-              </p>
+              <p className="text-xs text-white/65 font-inter">{contentReady ? `Showing ${filteredListings.length} of ${listings.length} properties across Greater Perth` : 'Explore properties across Greater Perth'}</p>
             </div>
 
             {/* Filter Bar */}
@@ -1018,9 +1016,7 @@ export default function App() {
                   ))}
                 </div>
 
-                <span className="text-xs text-white/60 tabular-nums">
-                  {filteredListings.length} properties found
-                </span>
+                <span className="text-xs text-white/60 tabular-nums">{contentReady ? `${filteredListings.length} properties found` : 'Properties loading'}</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-3 border-t border-white/15">
@@ -1062,13 +1058,14 @@ export default function App() {
             </div>
 
             {/* Grid of Gradient-to-Black Property Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" aria-busy={!contentReady}>
+              {!contentReady && !contentError && Array.from({ length: 6 }, (_, index) => <div key={index} aria-hidden="true" className="h-[430px] bg-[#171717]" />)}
               {filteredListings.map((property) => (
                 <PropertyCard key={property.id} property={property}
                   agentName={teamMembers.find((agent) => agent.id === property.agentId)?.name}
                   onSelect={setSelectedProperty} />
               ))}
-              {filteredListings.length === 0 && (
+              {contentReady && filteredListings.length === 0 && (
                 <p className="col-span-full py-12 text-center text-white/75">No properties match these filters. Try another suburb or clear your filters.</p>
               )}
             </div>
