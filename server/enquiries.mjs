@@ -128,7 +128,7 @@ export function createEnquiryService({ store, sender, preview = false, now = Dat
     const key = `limits/${Math.floor(now() / HOUR)}/${hash(ip || 'unknown')}`;
     for (let attempt = 0; attempt < 5; attempt++) {
       const entry = await get(key);
-      if ((entry?.data.count || 0) >= 6) return false;
+      if ((entry?.data.count || 0) >= 20) return false;
       const result = await store.setJSON(key, { count: (entry?.data.count || 0) + 1 }, entry ? { onlyIfMatch: entry.etag } : { onlyIfNew: true });
       if (result.modified) return true;
     }

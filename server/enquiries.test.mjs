@@ -201,7 +201,7 @@ test('durable rate limit applies across instances but safe retries do not consum
   const data = input();
   await a.submit(post(data), { ip: 'same' });
   for (let n = 0; n < 10; n++) assert.equal((await b.submit(post(data), { ip: 'same' })).status, 201);
-  for (let n = 0; n < 5; n++) assert.equal((await b.submit(post(input()), { ip: 'same' })).status, 201);
+  for (let n = 0; n < 19; n++) assert.equal((await b.submit(post(input()), { ip: 'same' })).status, 201);
   assert.equal((await a.submit(post(input()), { ip: 'same' })).status, 429);
 });
 
