@@ -6,13 +6,36 @@ const json = (body, status = 200, headers = {}) => Response.json(body, { status,
 const hash = value => createHash('sha256').update(value).digest('hex');
 const date = milliseconds => new Date(milliseconds).toISOString().slice(0, 10);
 
+export const notificationTitle = record => record.enquiry.type === 'Free Appraisal' ? 'Appraisal Request' : record.enquiry.type;
+export const notificationSubject = record => `${notificationTitle(record)}${record.enquiry.type === 'Career Application' ? ' — Sales Executive' : ''} — ${record.reference}`;
+const CV_LIMIT = 2 * 1024 * 1024;
+export function validateCareerCv(value) {
+  if (value === undefined || value === null) return undefined;
+  if (!value || typeof value !== 'object' || typeof value.name !== 'string' || !value.name.trim() || value.name.length>250 || typeof value.base64 !== 'string' || value.base64.length > 2796204 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value.base64)) throw new Error('Please upload a resume file under 2 MB.');
+  const bytes = Buffer.from(value.base64, 'base64');
+  if (!bytes.length || bytes.length > CV_LIMIT || bytes.toString('base64') !== value.base64) throw new Error('Please upload a resume file under 2 MB.');
+  const extension=value.name.toLowerCase().split('.').pop();
+  const type={pdf:'application/pdf',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',odt:'application/vnd.oasis.opendocument.text',rtf:'application/rtf',txt:'text/plain',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png'}[extension]||'application/octet-stream';
+  return {name:value.name.replace(/[^\w. -]/g,'_').slice(-120),base64:value.base64,size:bytes.length,type};
+}
+export function submittedTime(value) {
+  const stamp = new Date(value);
+  if (!Number.isFinite(stamp.getTime())) return 'Date not recorded';
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-AU', {
+    timeZone: 'Australia/Perth', day: 'numeric', month: 'long', year: 'numeric',
+    hour: 'numeric', minute: '2-digit', hour12: true,
+  }).formatToParts(stamp).map(part => [part.type, part.value]));
+  return `${parts.day} ${parts.month} ${parts.year}, ${parts.hour}:${parts.minute} ${parts.dayPeriod.toLowerCase()} AWST (Perth)`;
+}
+
 export function notificationText(record) {
   const e = record.enquiry;
   return [
-    `Reference: ${record.reference}`, `Submitted: ${record.createdAt}`, `Type: ${e.type}`,
+    `Reference: ${record.reference}`, `Submitted: ${submittedTime(record.createdAt)}`, `Type: ${notificationTitle(record)}`,
     `Name: ${e.clientName}`, `Email: ${e.email}`, `Phone: ${e.phone || 'Not provided'}`,
-    `Property: ${e.propertyTitle || e.suburbOrAddress || 'Not specified'}`,
-    `Agent requested: ${e.agentName || 'Not specified'}`, `Service: ${e.serviceInterest || 'Not specified'}`,
+    ...(e.type === 'Career Application' ? [`Role: ${e.role}`, `Sales experience: ${e.experience}`, `CV: ${e.cv?.name || 'Not provided'}`] : [
+      `Property: ${e.propertyTitle || e.suburbOrAddress || 'Not specified'}`,
+      `Agent requested: ${e.agentName || 'Not specified'}`, `Service: ${e.serviceInterest || 'Not specified'}`]),
     '', 'Message:', e.message,
   ].join('\n');
 }
@@ -29,11 +52,16 @@ export function validateEnquiry(value) {
     if (typeof text !== 'string' || text.length > limit || (required && !text.trim()) || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(text)) throw new Error('Please check your enquiry details.');
     result[key] = text.trim();
   }
-  if (!['Free Appraisal', 'Property Enquiry', 'Inspection Registration', 'General Contact'].includes(result.type)) throw new Error('Please choose a valid enquiry type.');
+  if (!['Free Appraisal', 'Property Enquiry', 'Inspection Registration', 'General Contact', 'Career Application'].includes(result.type)) throw new Error('Please choose a valid enquiry type.');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(result.email) || /[\r\n]/.test(result.email)) throw new Error('Please enter a valid email address.');
   if (/[\r\n]/.test(result.clientName)) throw new Error('Please check your name.');
   if (result.type === 'Free Appraisal' && (!result.suburbOrAddress || !result.phone)) throw new Error('Please provide your property address and phone number.');
   result.newsletterRequested=value.newsletterOptIn===true;
+  if(result.type==='Career Application'){
+    if(value.role!=='Sales Executive'||!['1–2 years','3–5 years','More than 5 years'].includes(value.experience)||!result.phone)throw new Error('Please provide your phone number and sales experience.');
+    result.role=value.role;result.experience=value.experience;result.newsletterRequested=false;
+    const cv=validateCareerCv(value.cv);if(!cv)throw new Error('Please upload your resume.');result.cv=cv;
+  }
   return result;
 }
 
@@ -48,7 +76,7 @@ export function createEmailSender({ apiKey, from, enabled = false, fetcher = fet
       const response = await fetcher('https://api.resend.com/emails', {
         method: 'POST', signal: AbortSignal.timeout(8000),
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'Idempotency-Key': `ere-enquiry/${record.id}` },
-        body: JSON.stringify({ from, to: [TO], reply_to: e.email, subject: `Website ${e.type} — ${record.reference}`, text }),
+        body: JSON.stringify({ from, to: [TO], reply_to: e.email, subject: notificationSubject(record), text, ...(e.cv?{attachments:[{filename:e.cv.name,content:e.cv.base64}]}:{}) }),
       });
       if (!response.ok) throw new Error('Email provider unavailable');
       const data = await response.json();
@@ -64,6 +92,7 @@ export function createEnquiryService({ store, sender, preview = false, now = Dat
   async function capture(key){
     if(!captureContact)return;
     const entry=await get(key);if(!entry||entry.data.contactSaved)return;
+    if(entry.data.enquiry.type==='Career Application')return; // Applicant details stay out of marketing contacts.
     await captureContact(entry.data,false);
     await store.setJSON(key,{...entry.data,contactSaved:true},{onlyIfMatch:entry.etag});
   }
@@ -109,12 +138,14 @@ export function createEnquiryService({ store, sender, preview = false, now = Dat
     if (request.method !== 'POST') return json({ error: 'Not found.' }, 405, { Allow: 'POST' });
     if (request.headers.get('origin') !== new URL(request.url).origin || !request.headers.get('content-type')?.startsWith('application/json')) return json({ error: 'Request not allowed.' }, 403);
     try {
-      if (Number(request.headers.get('content-length')) > 14000) return json({ error: 'Your message is too long.' }, 413);
+      const careerRoute=new URL(request.url).pathname==='/api/enquiries/careers';
+      const bodyLimit=careerRoute?2900000:14000;
+      if (Number(request.headers.get('content-length')) > bodyLimit) return json({ error: 'Your submission is too large.' }, 413);
       let raw = '', size = 0;
       const decoder = new TextDecoder();
       for await (const chunk of request.body || []) {
         size += chunk.byteLength;
-        if (size > 14000) return json({ error: 'Your message is too long.' }, 413);
+        if (size > bodyLimit) return json({ error: 'Your submission is too large.' }, 413);
         raw += decoder.decode(chunk, { stream: true });
       }
       raw += decoder.decode();
@@ -133,6 +164,7 @@ export function createEnquiryService({ store, sender, preview = false, now = Dat
       if (body?.website || typeof body?.requestId !== 'string' || !/^\d{13}-[a-f0-9-]{36}$/.test(body.requestId)) return json({ error: 'Please refresh the page and try again.' }, 400);
       let enquiry;
       try { enquiry = validateEnquiry(body); } catch (error) { return json({ error: error.message }, 400); }
+      if(careerRoute!==(enquiry.type==='Career Application'))return json({error:'Please use the correct form for this request.'},400);
       const timestamp = Number(body.requestId.slice(0, 13));
       if (!Number.isFinite(timestamp) || Math.abs(now() - timestamp) > 24 * HOUR) return json({ error: 'Please refresh the page and try again.' }, 400);
       const key = `requests/${date(timestamp)}/${body.requestId}`;
@@ -173,6 +205,14 @@ export function createEnquiryService({ store, sender, preview = false, now = Dat
     const denied = await authorize(request, context);
     if (denied) return denied;
     if (request.method !== 'GET') return json({ error: 'Not found.' }, 405);
+    const url=new URL(request.url);
+    if(url.searchParams.get('download')==='cv'){
+      const id=url.searchParams.get('requestId')||'';
+      if(!/^\d{13}-[a-f0-9-]{36}$/.test(id))return json({error:'CV not found.'},404);
+      const entry=await get(`requests/${date(Number(id.slice(0,13)))}/${id}`),cv=entry?.data.enquiry.cv;
+      if(!cv)return json({error:'CV not found.'},404);
+      return new Response(Buffer.from(cv.base64,'base64'),{headers:{'Content-Type':'application/octet-stream','Content-Disposition':`attachment; filename="${cv.name}"`,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
+    }
     const day = new URL(request.url).searchParams.get('day') || date(now());
     if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return json({ error: 'Invalid date.' }, 400);
     const listing = await store.list({ prefix: `requests/${day}/` });
@@ -184,7 +224,8 @@ export function createEnquiryService({ store, sender, preview = false, now = Dat
       const entry = await get(blob.key);
       if (entry) {
         const { id,reference,createdAt,enquiry,delivery }=entry.data;
-        records.push({id,reference,createdAt,enquiry,delivery:{status:delivery.status,attempts:delivery.attempts},notificationConfigured:sender.ready});
+        const {cv,...details}=enquiry;
+        records.push({id,reference,createdAt,enquiry:{...details,...(cv?{cv:{name:cv.name,size:cv.size}}:{})},delivery:{status:delivery.status,attempts:delivery.attempts},notificationConfigured:sender.ready});
       }
     }
     return json({ records:records.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)), day, offset, total:listing.blobs.length, truncated:offset+100<listing.blobs.length, notificationConfigured:sender.ready, preview });

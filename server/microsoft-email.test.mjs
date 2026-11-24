@@ -141,6 +141,16 @@ test('Graph sends only to sales@, sets visitor Reply-To, saves Sent Items and tr
   assert.deepEqual(body.message.replyTo, [{ emailAddress: { address: record.enquiry.email } }]);
   assert.equal(body.saveToSentItems, true);
   assert.equal(body.message.body.contentType, 'Text');
+  assert.equal(body.message.subject.startsWith('Website '),false);
+  assert.match(body.message.body.content,/AWST \(Perth\)/);
+});
+
+test('Graph career notification carries the private PDF résumé as an attachment',async()=>{
+  const t=setup();await t.complete(await t.begin());const sender=await t.connection.sender();
+  const record=fixture();record.enquiry={...record.enquiry,type:'Career Application',role:'Sales Executive',experience:'1–2 years',cv:{name:'resume.pdf',type:'application/pdf',base64:Buffer.from('%PDF-1.4\nTest\n%%EOF').toString('base64')}};
+  await sender.send(record);const body=JSON.parse(t.calls.find(call=>call.url.endsWith('/sendMail')).body);
+  assert.match(body.message.subject,/^Career Application — Sales Executive — /);
+  assert.deepEqual(body.message.attachments,[{'@odata.type':'#microsoft.graph.fileAttachment',name:'resume.pdf',contentType:'application/pdf',contentBytes:record.enquiry.cv.base64}]);
 });
 
 test('expired access token refreshes and revoked refresh tokens require reconnection', async () => {

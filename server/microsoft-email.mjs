@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
-import { notificationText } from './enquiries.mjs';
+import { notificationText, notificationSubject } from './enquiries.mjs';
 
 export const SALES_MAILBOX = 'sales@exceptionalrealestate.com.au';
 const SCOPES = 'offline_access https://graph.microsoft.com/Mail.Send https://graph.microsoft.com/User.Read';
@@ -138,7 +138,7 @@ export function createMicrosoftConnection({ store, config = microsoftConfigurati
           response = await fetcher('https://graph.microsoft.com/v1.0/me/sendMail', {
             method: 'POST', signal: AbortSignal.timeout(8000),
             headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: { subject: `Website ${record.enquiry.type} — ${record.reference}`, body: { contentType: 'Text', content: notificationText(record) }, toRecipients: [{ emailAddress: { address: SALES_MAILBOX } }], replyTo: [{ emailAddress: { address: record.enquiry.email } }] }, saveToSentItems: true }),
+            body: JSON.stringify({ message: { subject: notificationSubject(record), body: { contentType: 'Text', content: notificationText(record) }, toRecipients: [{ emailAddress: { address: SALES_MAILBOX } }], replyTo: [{ emailAddress: { address: record.enquiry.email } }], ...(record.enquiry.cv?{attachments:[{'@odata.type':'#microsoft.graph.fileAttachment',name:record.enquiry.cv.name,contentType:record.enquiry.cv.type||'application/octet-stream',contentBytes:record.enquiry.cv.base64}]}:{}) }, saveToSentItems: true }),
           });
         } catch { throw failure(false); }
         if (response.status !== 202) throw failure([401, 429].includes(response.status));

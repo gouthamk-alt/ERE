@@ -1,21 +1,38 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Mail } from 'lucide-react';
+import { EnquirySpamField } from './EnquirySpamField';
+import { EnquiryConfirmation } from './EnquiryConfirmation';
+import type { SubmitEnquiry, EnquiryReceipt } from '../enquiries';
 
-export function Careers() {
+export function Careers({onSubmitEnquiry}:{onSubmitEnquiry:SubmitEnquiry}) {
   const [form, setForm] = useState({ name: '', email: '', phone: '', experience: '', message: '' });
   const [prepared, setPrepared] = useState(false);
   const [error, setError] = useState('');
-  function apply(event: React.FormEvent<HTMLFormElement>) {
+  const [busy,setBusy]=useState(false),[cv,setCv]=useState<File|null>(null),[receipt,setReceipt]=useState<EnquiryReceipt|null>(null);
+  const locked=useRef(false),fileInput=useRef<HTMLInputElement>(null);
+  async function apply(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if(locked.current)return;
+    const website=String(new FormData(event.currentTarget).get('website')||'');
     if (!form.name.trim() || !form.email.trim() || !form.phone.trim() || !form.experience || !form.message.trim()) {
       setError('Please complete your contact details, experience and introduction.');
       return;
     }
-    const subject = `Sales Executive application — ${form.name.trim()}`;
-    const body = `Hello Wendy,\n\nI would like to apply for the Sales Executive role at Exceptional Real Estate.\n\n${form.message.trim()}\n\nName: ${form.name.trim()}\nEmail: ${form.email.trim()}\nPhone: ${form.phone.trim()}\nReal estate sales experience: ${form.experience}\n\nPlease find my CV attached.`;
-    window.location.href = `mailto:wendy@exceptionalrealestate.com.au?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    setPrepared(true);
-    setError('');
+    if(!cv){setError('Please upload your resume.');return;}
+    if(!cv.size||cv.size>2*1024*1024){setError('Please choose a resume file under 2 MB.');return;}
+    locked.current=true;setBusy(true);setError('');
+    try{
+      const base64=await new Promise<string>((resolve,reject)=>{
+        const reader=new FileReader();
+        reader.onload=()=>resolve(String(reader.result).split(',')[1]);
+        reader.onerror=()=>reject(new Error('Could not read the resume. Please choose it again.'));
+        reader.readAsDataURL(cv);
+      });
+      const attachment={name:cv.name,base64};
+      const saved=await onSubmitEnquiry({type:'Career Application',clientName:form.name.trim(),email:form.email.trim(),phone:form.phone.trim(),message:form.message.trim(),role:'Sales Executive',experience:form.experience,cv:attachment,website,newsletterOptIn:false});
+      setReceipt(saved);setPrepared(true);
+    }catch(error){setError(error instanceof Error?error.message:'Could not submit your application. Please try again.');}
+    finally{locked.current=false;setBusy(false);}
   }
   return (
     <section className="careers-page max-w-[1100px] mx-auto px-6 py-14 sm:py-20 space-y-14">
@@ -46,7 +63,8 @@ export function Careers() {
         </div>
         <form onSubmit={apply} className="space-y-6" aria-labelledby="career-application-heading" aria-describedby="career-email-help">
           <h2 id="career-application-heading" className="text-2xl sm:text-3xl">Apply for this role</h2>
-          <p id="career-email-help" className="text-sm text-white/65 leading-relaxed">Complete your details to prepare an email to Wendy Chia. Attach your CV in your email app, then send your application.</p>
+          <p id="career-email-help" className="text-sm text-white/65 leading-relaxed">Send your application directly to our office. We’ll review your experience and get in touch.</p>
+          <EnquirySpamField />
           <label className="agent-contact-label">Full name<input className="agent-contact-input" name="name" autoComplete="name" required maxLength={120} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <label className="agent-contact-label">Email address<input className="agent-contact-input" type="email" name="email" autoComplete="email" required maxLength={254} value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></label>
@@ -56,11 +74,13 @@ export function Careers() {
             <option value="">Select your experience</option><option>1–2 years</option><option>3–5 years</option><option>More than 5 years</option>
           </select></label>
           <label className="agent-contact-label">Tell us a little about yourself<textarea className="agent-contact-input" name="message" required rows={4} maxLength={2500} value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} /></label>
+          <label className="agent-contact-label">Upload resume (required)<input ref={fileInput} className="agent-contact-input" type="file" name="cv" required disabled={busy||prepared} onChange={e=>{setCv(e.target.files?.[0]||null);setError('');}}/><span className="block mt-2 text-xs text-white/55">PDF, Word or any other file format, up to 2 MB. Your resume is sent privately with your application.</span></label>
           {error && <p role="alert" className="text-sm">{error}</p>}
-          <button type="submit" className="zenu-button-outline-light inline-flex gap-2"><Mail className="w-4 h-4" aria-hidden="true" /> Prepare application email</button>
-          {prepared && <p role="status" className="text-sm text-white/75 leading-relaxed">Send your application from your email app and remember to attach your CV. If it didn’t open, email <a className="underline break-all" href="mailto:wendy@exceptionalrealestate.com.au">wendy@exceptionalrealestate.com.au</a> directly.</p>}
+          <button type="submit" disabled={busy||prepared} className="zenu-button-outline-light inline-flex gap-2 disabled:opacity-50"><Mail className="w-4 h-4" aria-hidden="true" />{busy?'Submitting…':prepared?'Application received':'Submit application'}</button>
+          {prepared && <p role="status" className="text-sm text-white/75 leading-relaxed">Your application has been received. Our team will review it and get in touch. <button type="button" className="underline" onClick={()=>{setPrepared(false);setForm({name:'',email:'',phone:'',experience:'',message:''});setCv(null);if(fileInput.current)fileInput.current.value='';}}>Submit another application</button></p>}
         </form>
       </div>
+      <EnquiryConfirmation receipt={receipt} onClose={()=>setReceipt(null)} application />
     </section>
   );
 }

@@ -1111,7 +1111,7 @@ export default function App() {
                   </div>
                   <p className="text-xs text-white/85 leading-relaxed max-w-lg mx-auto">
                     Thank you, {appraisalForm.fullName}. Your appraisal request for{' '}
-                    <strong>{appraisalForm.propertyAddress}</strong> has been saved. Our team will be in touch. {enquiryReceipt?.preview && 'Preview only — no email was sent.'}
+                    <strong>{appraisalForm.propertyAddress}</strong> has been saved. Our team will be in touch.
                   </p>
                   <button
                     type="button"
@@ -1325,7 +1325,7 @@ export default function App() {
         {/* =================================================================== */}
         {/* VIEW 5: PROPERTY VIDEOS                                             */}
         {/* =================================================================== */}
-        {activePage === 'careers' && <Careers />}
+        {activePage === 'careers' && <Careers onSubmitEnquiry={handleAddEnquiry} />}
         {activePage === 'videos' && <VideoLibrary />}
 
         {/* =================================================================== */}

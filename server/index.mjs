@@ -51,7 +51,7 @@ const enquiries = createEnquiryService({
   sender: createEmailSender(), preview: true, authorize: async () => null,
   captureContact:(record,confirmed)=>marketing.captureEnquiryContact(record,confirmed),
 });
-app.all(['/api/enquiries','/api/enquiries/subscribe', '/api/admin/enquiries'], async (req, res) => {
+app.all(['/api/enquiries','/api/enquiries/careers','/api/enquiries/subscribe', '/api/admin/enquiries'], async (req, res) => {
   const request = new Request(`${req.protocol}://${req.get('host')}${req.originalUrl}`, {
     method: req.method,
     headers: Object.fromEntries(Object.entries(req.headers).filter(([key, value]) => typeof value === 'string' && key !== 'content-length')),
@@ -59,7 +59,7 @@ app.all(['/api/enquiries','/api/enquiries/subscribe', '/api/admin/enquiries'], a
   });
   const response = req.path.startsWith('/api/admin/') ? await enquiries.inspect(request) : await enquiries.submit(request, { ip: req.ip });
   response.headers.forEach((value, key) => res.set(key, value));
-  res.status(response.status).send(await response.text());
+  res.status(response.status).send(Buffer.from(await response.arrayBuffer()));
 });
 const microsoft = createMicrosoftConnection({
   store: createLocalEnquiryStore(path.join(root, '.ere-data', 'microsoft-email')),

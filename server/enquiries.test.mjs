@@ -4,12 +4,14 @@ import { randomUUID } from 'node:crypto';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { createEnquiryService, createEmailSender } from './enquiries.mjs';
+import { createEnquiryService, createEmailSender, notificationSubject, notificationText, submittedTime, validateCareerCv } from './enquiries.mjs';
 import { createLocalEnquiryStore } from './local-enquiry-store.mjs';
 
 const fixed = Date.parse('2026-11-20T08:00:00Z');
 const input = (extra = {}) => ({ requestId: `${fixed}-${randomUUID()}`, type: 'Free Appraisal', clientName: 'Preview Visitor', email: 'visitor@example.com', phone: '0400000000', suburbOrAddress: 'Test property, Perth', message: 'Please discuss an appraisal.', ...extra });
 const post = (data, headers = {}) => new Request('https://example.com/api/enquiries', { method: 'POST', headers: { Origin: 'https://example.com', 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(data) });
+const careerPost=data=>new Request('https://example.com/api/enquiries/careers',{method:'POST',headers:{Origin:'https://example.com','Content-Type':'application/json'},body:JSON.stringify(data)});
+const careerInput=(extra={})=>input({type:'Career Application',role:'Sales Executive',experience:'1–2 years',cv:{name:'resume.pdf',base64:Buffer.from('%PDF-1.4\nTest fixture\n%%EOF').toString('base64')},...extra});
 function memory() {
   const entries = new Map(); let version = 0;
   return {
@@ -34,6 +36,55 @@ function setup(options = {}) {
   return { store, sends, service };
 }
 const records = store => [...store.entries.values()].filter(entry => entry.data.enquiry).map(entry => entry.data);
+
+test('notification labels and submitted date use readable Perth time without changing stored types', () => {
+  const record={reference:'ERE-EXAMPLE',createdAt:'2026-11-24T04:11:44.926Z',enquiry:{...input(),type:'Free Appraisal'}};
+  assert.equal(notificationSubject(record),'Appraisal Request — ERE-EXAMPLE');
+  assert.match(notificationText(record),/Submitted: 24 November 2026, 12:11 pm AWST \(Perth\)/);
+  assert.match(notificationText(record),/Type: Appraisal Request/);
+  assert.equal(record.enquiry.type,'Free Appraisal');
+  assert.equal(submittedTime('2026-11-23T20:05:00Z'),'24 November 2026, 4:05 am AWST (Perth)');
+  assert.equal(submittedTime('invalid'),'Date not recorded');
+  for(const type of ['Property Enquiry','Inspection Registration','General Contact']){
+    assert.equal(notificationSubject({...record,enquiry:{...record.enquiry,type}}),`${type} — ERE-EXAMPLE`);
+  }
+});
+
+test('career applications require a nonempty resume and valid experience on the dedicated route',async()=>{
+  const {service}=setup({preview:true});
+  for(const changes of [{cv:undefined},{cv:{name:'',base64:'YWJjZA=='}},{cv:{name:'resume.pdf',base64:''}},{cv:{name:'resume.pdf',base64:'A'.repeat(2796208)}},{experience:'0 years'},{phone:''}])assert.equal((await service.submit(careerPost(careerInput(changes)))).status,400);
+  assert.equal((await service.submit(post(careerInput()))).status,400);
+  assert.equal((await service.submit(careerPost(input()))).status,400);
+});
+
+test('career resumes are durable and private, download unchanged for admins, and do not subscribe applicants',async()=>{
+  let captures=0;
+  const {service,store}=setup({preview:true,authorize:async()=>null,captureContact:async()=>{captures++;}});
+  const data=careerInput({newsletterOptIn:true});
+  const response=await service.submit(careerPost(data));assert.equal(response.status,201);
+  assert.deepEqual(Object.keys(await response.json()).sort(),['preview','reference']);
+  const saved=records(store)[0];assert.equal(saved.enquiry.cv.base64,data.cv.base64);assert.equal(saved.enquiry.newsletterRequested,false);assert.equal(captures,0);
+  const listed=await (await service.inspect(new Request('https://example.com/api/admin/enquiries?day=2026-11-20'))).json();
+  assert.equal(listed.records[0].enquiry.cv.base64,undefined);assert.equal(listed.records[0].enquiry.cv.name,'resume.pdf');
+  const downloadUrl=`https://example.com/api/admin/enquiries?download=cv&requestId=${data.requestId}`;
+  const download=await service.inspect(new Request(downloadUrl));assert.equal(download.status,200);assert.equal(download.headers.get('Cache-Control'),'no-store');assert.match(download.headers.get('Content-Disposition'),/^attachment/);assert.equal(Buffer.from(await download.arrayBuffer()).toString('base64'),data.cv.base64);
+  const anonymous=setup({store}).service;assert.equal((await anonymous.inspect(new Request(downloadUrl))).status,401);
+});
+
+test('career notification includes resume attachment and experience, sent only to sales@',async()=>{
+  let sent;
+  const sender=createEmailSender({enabled:true,apiKey:'test-only',from:'test@example.com',fetcher:async(_url,options)=>{sent=JSON.parse(options.body);return Response.json({id:'test-accepted'});}});
+  const {service}=setup({sender});const data=careerInput();
+  assert.equal((await service.submit(careerPost(data))).status,201);
+  assert.deepEqual(sent.to,['sales@exceptionalrealestate.com.au']);assert.match(sent.subject,/^Career Application — Sales Executive — ERE-/);assert.match(sent.text,/Sales experience: 1–2 years/);assert.deepEqual(sent.attachments,[{filename:'resume.pdf',content:data.cv.base64}]);
+});
+
+test('resume upload accepts Word and other file formats with a safe default download type',()=>{
+  const bytes=Buffer.from('Nonempty test resume bytes');
+  for(const [name,type] of [['resume.doc','application/msword'],['resume.docx','application/vnd.openxmlformats-officedocument.wordprocessingml.document'],['resume.other','application/octet-stream']]){
+    const cv=validateCareerCv({name,base64:bytes.toString('base64')});assert.equal(cv.type,type);assert.equal(cv.base64,bytes.toString('base64'));
+  }
+});
 
 test('durably saves before sending and only returns a reference, never private data', async () => {
   const store = memory();
@@ -173,6 +224,8 @@ test('notification recipient is fixed, reply-to is the visitor, and content is p
   assert.deepEqual(body.to, ['sales@exceptionalrealestate.com.au']);
   assert.equal(body.reply_to, data.email);
   assert.equal(body.html, undefined);
+  assert.match(body.subject,/^Appraisal Request — ERE-/);
+  assert.match(body.text,/Submitted: 20 November 2026, 4:00 pm AWST \(Perth\)/);
   assert.ok(sent.headers['Idempotency-Key'].includes(data.requestId));
 });
 

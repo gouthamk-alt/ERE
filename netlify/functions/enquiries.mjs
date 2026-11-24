@@ -18,4 +18,4 @@ export default async function handler(request, context) {
   const service = await enquiryService(context);
   return new URL(request.url).pathname.startsWith('/api/admin/') ? service.inspect(request, context) : service.submit(request, context);
 }
-export const config = { path: ['/api/enquiries', '/api/enquiries/subscribe', '/api/admin/enquiries'] };
+export const config = { path: ['/api/enquiries', '/api/enquiries/careers', '/api/enquiries/subscribe', '/api/admin/enquiries'] };
