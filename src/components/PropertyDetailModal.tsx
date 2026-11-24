@@ -1,4 +1,4 @@
-import { displayPropertyPrice } from '../propertyPresentation';
+import { displayPropertyPrice, reaListingUrl, propertyImageVariant } from '../propertyPresentation';
 import React from 'react';
 import {
   X,
@@ -81,6 +81,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   }, [property]);
 
   if (!property) return null;
+  const reaUrl = reaListingUrl(property.reaUrl);
 
   const leadAgent = agents.find((a) => a.id === property.agentId) || agents[0];
   const coAgent = property.coAgentId
@@ -202,12 +203,13 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                 <p className="font-cormorant text-2xl sm:text-4xl font-normal text-white tabular-nums">
                   {displayPropertyPrice(property)}
                 </p>
+                {reaUrl && <a href={reaUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-4 text-sm text-white underline underline-offset-4 hover:text-white/70 transition-colors">View on realestate.com.au ↗<span className="sr-only"> (opens in a new tab)</span></a>}
               </div>
             </div>
           </div>
 
           {gallery.length > 1 && <div className="flex gap-2 overflow-x-auto pb-2" aria-label="Property photo gallery">
-            {gallery.map((url, index) => <button type="button" key={url} aria-label={`Show property photo ${index + 1}`} aria-pressed={imageIndex === index} className="gallery-thumbnail" onClick={() => setImageIndex(index)}><PropertyImage src={url} alt="" className="w-full h-full object-cover" /></button>)}
+            {gallery.map((url, index) => <button type="button" key={url} aria-label={`Show property photo ${index + 1}`} aria-pressed={imageIndex === index} className="gallery-thumbnail" onClick={() => setImageIndex(index)}><PropertyImage src={propertyImageVariant(url, 'thumb')} alt="" className="w-full h-full object-cover" /></button>)}
           </div>}
 
           {/* Key Specifications Bar */}
@@ -215,31 +217,31 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             <div>
               <p className="text-xs text-white/60 font-inter">Bedrooms</p>
               <p className="text-lg font-medium text-white tabular-nums mt-0.5 font-inter">
-                {property.bedrooms > 0 ? `${property.bedrooms} Bed` : 'Commercial'}
+                {property.bedrooms > 0 ? `${property.bedrooms} Bed` : 'Not specified'}
               </p>
             </div>
             <div>
               <p className="text-xs text-white/60 font-inter">Bathrooms</p>
               <p className="text-lg font-medium text-white tabular-nums mt-0.5 font-inter">
-                {property.bathrooms} Bath
+                {property.bathrooms > 0 ? `${property.bathrooms} Bath` : 'Not specified'}
               </p>
             </div>
             <div>
               <p className="text-xs text-white/60 font-inter">Car Parking</p>
               <p className="text-lg font-medium text-white tabular-nums mt-0.5 font-inter">
-                {property.carSpaces} Car
+                {property.carSpaces > 0 ? `${property.carSpaces} Car` : 'Not specified'}
               </p>
             </div>
             <div>
               <p className="text-xs text-white/60 font-inter">Land Area</p>
               <p className="text-lg font-medium text-white tabular-nums mt-0.5 font-inter">
-                {property.landSizeSqm.toLocaleString()} sqm
+                {property.landSizeSqm > 0 ? `${property.landSizeSqm.toLocaleString()} sqm` : 'Not specified'}
               </p>
             </div>
             <div>
               <p className="text-xs text-white/60 font-inter">Building Area</p>
               <p className="text-lg font-medium text-white tabular-nums mt-0.5 font-inter">
-                {property.buildingAreaSqm.toLocaleString()} sqm
+                {property.buildingAreaSqm > 0 ? `${property.buildingAreaSqm.toLocaleString()} sqm` : 'Not specified'}
               </p>
             </div>
           </div>
@@ -252,12 +254,12 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                 <h3 className="font-cormorant text-2xl sm:text-3xl font-light text-white leading-snug">
                   {property.headline}
                 </h3>
-                <p className="text-white/85 text-base leading-relaxed mt-4 font-inter font-light">
+                <p className="text-white/85 text-base leading-relaxed mt-4 font-inter font-light whitespace-pre-line">
                   {property.description}
                 </p>
               </div>
 
-              <div className="pt-6 border-t border-[#302f2f]">
+              {property.features.length > 0 && <div className="pt-6 border-t border-[#302f2f]">
                 <h4 className="text-sm font-medium text-white mb-4 font-inter uppercase tracking-wider">
                   Property Highlights
                 </h4>
@@ -268,20 +270,20 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                       className="flex items-start gap-3 text-sm text-white/85 font-inter font-light"
                     >
                       <span className="tabular-nums text-xs text-white/60 mt-0.5">
-                        0{index + 1}.
+                        {String(index + 1).padStart(2, '0')}.
                       </span>
                       <span>{feat}</span>
                     </li>
                   ))}
                 </ul>
-              </div>
+              </div>}
 
               <div className="pt-6 border-t border-[#302f2f] flex flex-wrap items-center justify-between gap-4 text-xs text-white/70 font-inter">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-white" />
                   <span>Inspection:</span>
                   <span className="font-medium text-white">
-                    {property.inspectionTime}
+                    {property.inspectionTime || 'Contact agent to arrange'}
                   </span>
                 </div>
                 <div className="tabular-nums">

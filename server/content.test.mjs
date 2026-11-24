@@ -6,6 +6,8 @@ import path from 'node:path';
 import { createAdminAuth } from './auth.mjs';
 import { createContentHandler, initialContent, validateItem } from './content.mjs';
 import { createLocalContentStore } from './local-content-store.mjs';
+import zenuBaseline from '../staged/zenu-live-listings-baseline.json' with { type: 'json' };
+import zenuListings from '../staged/zenu-listings.json' with { type: 'json' };
 
 function memoryStore() {
   let entry = null, generation = 0;
@@ -34,6 +36,42 @@ async function setup(store = memoryStore()) {
 
 test('all existing listings and articles pass the publication schema', () => {
   for (const collection of ['listings', 'blogPosts']) for (const item of initialContent[collection]) validateItem(collection, item);
+});
+
+test('optional REA listing links persist while unsafe or unrelated URLs are rejected', () => {
+  const property = initialContent.listings[0];
+  const reaUrl = 'https://www.realestate.com.au/property-house-wa-applecross-123456789';
+  assert.equal(validateItem('listings', { ...property, reaUrl }).reaUrl, reaUrl);
+  assert.equal(validateItem('listings', { ...property, reaUrl: 'https://www.realestate.com.au/151625476' }).reaUrl, 'https://www.realestate.com.au/151625476');
+  assert.equal(validateItem('listings', { ...property, reaUrl: '' }).reaUrl, undefined);
+  for (const value of ['javascript:alert(1)', 'https://realestate.com.au.evil.example/property-house-wa-test-123', 'https://example.com/property-house-wa-test-123', 'https://user:pass@realestate.com.au/property-house-wa-test-123', 'http://realestate.com.au/property-house-wa-test-123', 'https://www.realestate.com.au/', 'https://www.realestate.com.au:444/property-house-wa-test-123']) {
+    assert.throws(() => validateItem('listings', { ...property, reaUrl: value }), /listing link/);
+  }
+});
+
+test('protected Zenu publication replaces only the unchanged baseline listings', async () => {
+  const store = memoryStore();
+  await store.setJSON('website-content-v1', { ...initialContent, listings: zenuBaseline }, { onlyIfNew: true });
+  const { read, mutate } = await setup(store);
+  const before = await (await read()).json();
+  const response = await mutate({ action: 'publishZenuImport', revision: before.revision });
+  assert.equal(response.status, 200);
+  const after = await response.json();
+  assert.equal(after.imported, 99);
+  assert.deepEqual(after.listings, zenuListings);
+  for (const key of ['blogPosts', 'teamMembers', 'testimonials']) assert.deepEqual(after[key], before[key]);
+  const again = await mutate({ action: 'publishZenuImport', revision: after.revision });
+  assert.equal((await again.json()).alreadyImported, true);
+  assert.equal((await mutate({ action: 'publishZenuImport', revision: before.revision })).status, 409);
+});
+
+test('Zenu publication rejects changed live listings without partial writes', async () => {
+  const store = memoryStore();
+  await store.setJSON('website-content-v1', { ...initialContent, listings: [{ ...zenuBaseline[0], title: 'New live edit' }, ...zenuBaseline.slice(1)] }, { onlyIfNew: true });
+  const { read, mutate } = await setup(store);
+  const before = await (await read()).json();
+  assert.equal((await mutate({ action: 'publishZenuImport', revision: before.revision })).status, 409);
+  assert.deepEqual(await (await read()).json(), before);
 });
 
 test('team reordering persists for another reader without changing profiles or listings', async () => {

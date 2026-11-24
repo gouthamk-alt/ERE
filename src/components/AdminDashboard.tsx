@@ -168,6 +168,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   >(new URLSearchParams(window.location.search).has('email') ? 'email' : 'inventory');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
+  const [zenuImportBusy, setZenuImportBusy] = useState(false);
+
+  const publishZenuListings = async () => {
+    setZenuImportBusy(true);
+    try {
+      const latest = await fetch('/api/admin/content', { credentials: 'same-origin' });
+      const current = await latest.json();
+      if (!latest.ok) throw new Error(current.error || 'Could not load the latest website content.');
+      const response = await fetch('/api/admin/content', {
+        method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'publishZenuImport', revision: current.revision }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'The listings could not be published.');
+      await onRefreshContent();
+      showToast(result.alreadyImported ? 'Zenu listings are already published.' : `${result.imported} Zenu listings published.`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'The listings could not be published.');
+    } finally {
+      setZenuImportBusy(false);
+    }
+  };
 
   // Listing Editor State
   const [editingListingId, setEditingListingId] = useState<string | null>(null);
@@ -558,9 +580,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* =============================================================== */}
           {activeSection === 'inventory' && (
             <div className="space-y-6 max-w-[1200px] mx-auto">
+              {listings.length === 14 && listings.some(item => item.id === '6703339') && (
+                <div className="flex flex-wrap items-center justify-between gap-4 bg-black p-4 border border-white/30">
+                  <p className="text-sm text-white/80">The prepared Zenu collection has 99 listings, including sold and leased history. Publishing saves a backup of the current listings.</p>
+                  <button type="button" disabled={zenuImportBusy} onClick={() => void publishZenuListings()} className="px-4 py-2 bg-white text-black text-sm font-semibold disabled:opacity-50">
+                    {zenuImportBusy ? 'Publishing listings…' : 'Publish 99 Zenu listings'}
+                  </button>
+                </div>
+              )}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#000000] p-4 border border-[#c6c6c6]/30">
                 <div className="flex flex-wrap items-center gap-2">
-                  {(['ALL', 'Residential Sale', 'Residential Lease', 'Commercial', 'Sold'] as const).map(
+                  {(['ALL', 'Residential Sale', 'Residential Lease', 'Commercial', 'Sold', 'Leased'] as const).map(
                     (cat) => (
                       <button
                         key={cat}
@@ -998,6 +1028,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
 
                 <div className="space-y-4 pt-4 border-t border-neutral-200">
+                  <div>
+                    <label htmlFor="listing-rea-url" className="block text-xs font-medium text-black mb-1">realestate.com.au listing link (optional)</label>
+                    <input id="listing-rea-url" type="url" value={listingForm.reaUrl || ''} onChange={e => setListingForm({ ...listingForm, reaUrl: e.target.value.trim() })} placeholder="https://www.realestate.com.au/property-…" className="zenu-input w-full" />
+                    <p className="text-xs text-neutral-500 mt-2">Adds a “View on realestate.com.au” button to this property. Leave blank to hide it.</p>
+                  </div>
                   <div>
                     <label className="block text-xs font-medium text-black mb-1">
                       Property Headline

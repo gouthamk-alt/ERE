@@ -4,6 +4,8 @@ import testimonialsSeed from './testimonials-seed.json' with { type: 'json' };
 import { cleanRichText } from './rich-text.mjs';
 import imageMigration from './image-migration.json' with { type: 'json' };
 import { withContentBackups } from './content-backups.mjs';
+import zenuListings from '../staged/zenu-listings.json' with { type: 'json' };
+import zenuBaseline from '../staged/zenu-live-listings-baseline.json' with { type: 'json' };
 
 export function migrateImageUrls(value) {
   if(typeof value==='string'){for(const [old,url] of Object.entries(imageMigration))value=value.split(old).join(url);return value;}
@@ -111,10 +113,16 @@ export function validateItem(collection, value) {
   item.featured = Boolean(value.featured);
   if (collection === 'blogPosts' && value.bodyHtml !== undefined) item.bodyHtml = cleanRichText(value.bodyHtml);
   if (collection === 'listings') {
+    if (value.reaUrl !== undefined && value.reaUrl !== '') {
+      let url;
+      try { url = new URL(value.reaUrl); } catch { throw new Error('Use a valid realestate.com.au listing link.'); }
+      if (typeof value.reaUrl !== 'string' || value.reaUrl.length > 2048 || url.protocol !== 'https:' || !['realestate.com.au', 'www.realestate.com.au'].includes(url.hostname) || url.username || url.password || url.port || !/^\/(?:property-[^/]+-)?\d+\/?$/.test(url.pathname)) throw new Error('Use an https://www.realestate.com.au/property-… listing link.');
+      item.reaUrl = url.href;
+    }
     for (const [key, allowed] of Object.entries({
       category: ['Residential Sale', 'Residential Lease', 'Commercial', 'Sold', 'Leased'],
       status: ['Available', 'Under Offer', 'Sold', 'Leased', 'Off-Market'],
-      propertyType: ['House', 'Apartment / Penthouse', 'Townhouse', 'Commercial Suite', 'Development Land'],
+      propertyType: ['House', 'Apartment / Penthouse', 'Townhouse', 'Commercial Suite', 'Development Land', 'Apartment', 'Unit', 'Vacant Land', 'Industrial/Warehouse', 'Mixed Farming', 'Viticulture', 'Commercial Farming', 'Retail', 'Residential', 'Villa - Exclusive', 'Offices', 'Showrooms/Bulky Goods', 'Duplex Semi-detached'],
     })) {
       if (!allowed.includes(value[key])) throw new Error(`Check the ${key} field.`);
       item[key] = value[key];
@@ -196,9 +204,19 @@ export function createContentHandler({ store, authorize, backups }) {
       if (raw.length > 3000000) return json({ error: 'Content is too large.' }, 413);
       let input;
       try { input = JSON.parse(raw); } catch { return json({ error: 'Invalid request.' }, 400); }
-      if (!input || (input.action !== 'import' && !(input.action === 'reorder' && ['teamMembers', 'testimonials'].includes(input.collection)) && (!Object.hasOwn(fields, input.collection) || !['add', 'update', 'delete'].includes(input.action)))) return json({ error: 'Invalid content operation.' }, 400);
+      if (!input || (input.action !== 'import' && input.action !== 'publishZenuImport' && !(input.action === 'reorder' && ['teamMembers', 'testimonials'].includes(input.collection)) && (!Object.hasOwn(fields, input.collection) || !['add', 'update', 'delete'].includes(input.action)))) return json({ error: 'Invalid content operation.' }, 400);
       const entry = await read();
       if (typeof input.revision !== 'string' || input.revision !== entry.etag) return json({ error: 'The website content changed in another session. Reload the latest content, review your edit and try again.', conflict: true }, 409);
+      if (input.action === 'publishZenuImport') {
+        if (canonical(entry.data.listings) === canonical(zenuListings)) return json({ ...entry.data, revision: entry.etag, alreadyImported: true });
+        if (canonical(entry.data.listings) !== canonical(zenuBaseline)) return json({ error: 'Live listings have changed since the import was prepared. Review and reconcile them before publishing.', conflict: true }, 409);
+        const listings = zenuListings.map(item => validateItem('listings', item));
+        if (new Set(listings.map(item => item.id)).size !== listings.length || listings.some(item => !entry.data.teamMembers.some(member => member.id === item.agentId) || (item.coAgentId && !entry.data.teamMembers.some(member => member.id === item.coAgentId)))) return json({ error: 'The prepared listings failed validation.' }, 400);
+        const data = { ...entry.data, listings };
+        if (JSON.stringify(data).length > 3000000) return json({ error: 'Website content is too large.' }, 413);
+        const result = await store.setJSON(KEY, data, { onlyIfMatch: entry.etag });
+        return result.modified ? json({ ...data, revision: result.etag, imported: listings.length }) : json({ error: 'Another edit was saved during import. Reload and review the latest content.' }, 409);
+      }
       if (input.action === 'reorder') {
         const members = entry.data[input.collection];
         const byId = new Map(members.map(member => [member.id, member]));

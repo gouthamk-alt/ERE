@@ -37,6 +37,8 @@ export const PropertyImage: React.FC<PropertyImageProps> = ({
     <img
       src={src}
       alt={alt}
+      loading="lazy"
+      decoding="async"
       referrerPolicy="no-referrer"
       onError={() => setHasError(true)}
       className={className}

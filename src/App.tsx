@@ -245,6 +245,7 @@ export default function App() {
   // Filtered Listings
   const filteredListings = useMemo(() => {
     return listings.filter((item) => {
+      if (selectedCategory === 'ALL' && ['Sold', 'Leased'].includes(item.status)) return false;
       if (selectedCategory !== 'ALL' && item.category !== selectedCategory) {
         return false;
       }
@@ -758,11 +759,7 @@ export default function App() {
                           className="zenu-input w-full h-9!"
                         >
                           <option value="ALL">All Property Types</option>
-                          <option value="House">House</option>
-                          <option value="Apartment / Penthouse">Apartment</option>
-                          <option value="Townhouse">Townhouse</option>
-                          <option value="Commercial Suite">Commercial</option>
-                          <option value="Development Land">Land</option>
+                          {[...new Set(listings.map(item => item.propertyType))].sort().map(type => <option key={type} value={type}>{type}</option>)}
                         </select>
                       </div>
                       <div>
@@ -1003,6 +1000,7 @@ export default function App() {
                       { label: 'Residential For Lease', value: 'Residential Lease' },
                       { label: 'Commercial', value: 'Commercial' },
                       { label: 'Sold', value: 'Sold' },
+                      { label: 'Leased', value: 'Leased' },
                     ] as const
                   ).map((tab) => (
                     <button
@@ -1044,11 +1042,7 @@ export default function App() {
                   className="zenu-input w-full"
                 >
                   <option value="ALL">All Property Types</option>
-                  <option value="House">House</option>
-                  <option value="Apartment / Penthouse">Apartment</option>
-                  <option value="Townhouse">Townhouse</option>
-                  <option value="Commercial Suite">Commercial</option>
-                  <option value="Development Land">Land</option>
+                  {[...new Set(listings.map(item => item.propertyType))].sort().map(type => <option key={type} value={type}>{type}</option>)}
                 </select>
 
                 <select

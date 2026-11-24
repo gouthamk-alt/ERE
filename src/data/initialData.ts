@@ -14,7 +14,7 @@ export interface PropertyListing {
   category: ListingCategory;
   status: ListingStatus;
   badgeText?: string;
-  propertyType: 'House' | 'Apartment / Penthouse' | 'Townhouse' | 'Commercial Suite' | 'Development Land';
+  propertyType: 'House' | 'Apartment / Penthouse' | 'Townhouse' | 'Commercial Suite' | 'Development Land' | 'Apartment' | 'Unit' | 'Vacant Land' | 'Industrial/Warehouse' | 'Mixed Farming' | 'Viticulture' | 'Commercial Farming' | 'Retail' | 'Residential' | 'Villa - Exclusive' | 'Offices' | 'Showrooms/Bulky Goods' | 'Duplex Semi-detached';
   bedrooms: number;
   bathrooms: number;
   carSpaces: number;
@@ -31,6 +31,7 @@ export interface PropertyListing {
   features: string[];
   listedDate: string;
   soldDate?: string;
+  reaUrl?: string;
 }
 
 export interface TeamMember {
