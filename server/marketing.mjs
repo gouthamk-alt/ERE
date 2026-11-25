@@ -1,6 +1,6 @@
 import { createHash, createHmac, timingSafeEqual, randomUUID } from 'node:crypto';
 import { cleanRichText } from './rich-text.mjs';
-import { syncBrevoContact } from './brevo.mjs';
+import { syncBrevoContact, createBrevoCampaign, cleanCampaignHtml } from './brevo.mjs';
 
 const hash = text => createHash('sha256').update(text).digest('hex');
 const reply = (body, status = 200) => Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -23,6 +23,9 @@ export function createMarketingService({ store, authorize, preview = false, env 
   const get = key => store.getWithMetadata(key, { type: 'json' });
   const configured = Boolean(env.NEWSLETTER_EMAIL_ENABLED === 'true' && env.RESEND_API_KEY && env.NEWSLETTER_FROM && env.NEWSLETTER_POSTAL_ADDRESS && env.NEWSLETTER_UNSUBSCRIBE_SECRET?.length >= 32 && /^https:\/\//.test(env.NEWSLETTER_SITE_URL || '') && env.NEWSLETTER_WEBHOOK_SECRET);
   const brevoConfigured = Boolean(!preview && env.BREVO_API_KEY && /^\d+$/.test(env.BREVO_LIST_ID || '') && Number(env.BREVO_LIST_ID) > 0);
+  const brevoCampaignLists = [Number(env.BREVO_LIST_ID), Number(env.BREVO_LEGACY_LIST_ID || 7)];
+  const brevoSender = env.BREVO_CAMPAIGN_SENDER || 'wendy@exceptionalrealestate.com.au';
+  const brevoCampaignConfigured = brevoConfigured && brevoCampaignLists.every(id => Number.isSafeInteger(id) && id > 0);
   const queueBrevo = email => store.setJSON(`brevo-sync/${randomUUID()}`, { email, queuedAt: new Date(now()).toISOString() }, {onlyIfNew:true});
   const signature = id => createHmac('sha256', env.NEWSLETTER_UNSUBSCRIBE_SECRET || '').update(`unsubscribe:${id}`).digest('hex');
   async function readCollection(key) {
@@ -64,7 +67,7 @@ export function createMarketingService({ store, authorize, preview = false, env 
     }
     if(!savedContact)throw new Error('Contact save could not be confirmed.');
     if(confirmed && savedContact.subscription==='subscribed') await queueBrevo(savedContact.email);
-    if(confirmed&&savedContact.subscription==='subscribed'){
+    if(confirmed&&savedContact.subscription==='subscribed'&&!brevoCampaignConfigured){
       const edition=await get('welcome-newsletter');
       if(edition){
         const id=hash(`welcome:${savedContact.id}`).slice(0,32).replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/,'$1-$2-$3-$4-$5');
@@ -188,7 +191,9 @@ export function createMarketingService({ store, authorize, preview = false, env 
         const {blobs}=await store.list({prefix:'campaigns/'}), campaigns=[];
         for(const blob of blobs.slice(-100)){const record=await get(blob.key);if(record){const job=record.data;campaigns.push({id:job.id,title:job.draft.title,status:job.status,createdAt:job.createdAt,total:job.recipients.length,accepted:job.recipients.filter(item=>item.status==='accepted').length,skipped:job.recipients.filter(item=>item.status==='skipped').length});}}
         const welcome=await get('welcome-newsletter');
-        return reply({...entry.data,revision:entry.etag,campaigns,preview,configured,welcome:welcome?.data.draft.title||null});
+        const brevoDrafts=[];
+        for(const blob of (await store.list({prefix:'brevo-campaigns/'})).blobs.slice(-50)){const record=await get(blob.key);if(record)brevoDrafts.push(record.data);}
+        return reply({...entry.data,revision:entry.etag,campaigns,preview,configured,welcome:welcome?.data.draft.title||null,brevoCampaignConfigured,brevoDrafts,brevoCampaignLists});
       }
       if(request.method!=='POST'||request.headers.get('origin')!==url.origin||!request.headers.get('content-type')?.startsWith('application/json'))return reply({error:'Request not allowed.'},403);
       const raw=await request.text(); if(raw.length>1500000)return reply({error:'Import is too large.'},413);
@@ -201,11 +206,33 @@ export function createMarketingService({ store, authorize, preview = false, env 
         return reply({saved:true});
       }
       if(collection==='newsletters'&&input.action==='review'){
+        if(brevoCampaignConfigured){
+          const draft=(await readCollection('newsletters')).data.items.find(item=>item.id===input.id);
+          if(!draft)return reply({error:'Newsletter not found.'},404);
+          const site=/^https:\/\//.test(env.NEWSLETTER_SITE_URL||'')?env.NEWSLETTER_SITE_URL:'https://www.exceptionalrealestate.com.au';
+          return reply({subject:draft.subject,html:cleanCampaignHtml(draft,site),fingerprint:hash(JSON.stringify({draft,lists:brevoCampaignLists})),brevo:true,lists:brevoCampaignLists});
+        }
         const result=await audience(input.id);
         const site=preview?url.origin:env.NEWSLETTER_SITE_URL;
         return reply({count:result.contacts.length,fingerprint:result.fingerprint,subject:result.draft.subject,html:htmlEmail(result.draft,result.contacts[0]||{id:'00000000-0000-0000-0000-000000000000'},site||url.origin).html,preview,configured});
       }
+      if(collection==='newsletters'&&input.action==='brevoDraft'){
+        if(!brevoCampaignConfigured)return reply({error:'Brevo campaign publishing is not configured.'},503);
+        if(!uuid(input.sendId))return reply({error:'Invalid draft request ID.'},400);
+        const key=`brevo-campaigns/${input.sendId}`,existing=await get(key);
+        if(existing){if(existing.data.fingerprint!==input.fingerprint)return reply({error:'Newsletter changed.'},409);return reply(existing.data);}
+        const draft=(await readCollection('newsletters')).data.items.find(item=>item.id===input.id);
+        if(!draft)return reply({error:'Newsletter not found.'},404);
+        const fingerprint=hash(JSON.stringify({draft,lists:brevoCampaignLists}));
+        if(fingerprint!==input.fingerprint)return reply({error:'Newsletter changed. Review it again.'},409);
+        const site=/^https:\/\//.test(env.NEWSLETTER_SITE_URL||'')?env.NEWSLETTER_SITE_URL:'https://www.exceptionalrealestate.com.au';
+        const campaignId=await createBrevoCampaign({apiKey:env.BREVO_API_KEY,draft,listIds:brevoCampaignLists,sender:brevoSender,site,fetcher});
+        const record={id:input.sendId,newsletterId:draft.id,title:draft.title,fingerprint,campaignId,status:'draft',createdAt:new Date(now()).toISOString()};
+        await store.setJSON(key,record,{onlyIfNew:true});
+        return reply(record,201);
+      }
       if(collection==='newsletters'&&input.action==='send'){
+        if(brevoCampaignConfigured)return reply({error:'Prepare this campaign in Brevo and send it there.'},409);
         if(!uuid(input.sendId))return reply({error:'Invalid campaign ID.'},400);
         const key=`campaigns/${input.sendId}`, existing=await get(key);
         if(existing){if(existing.data.fingerprint!==input.fingerprint)return reply({error:'Campaign changed.'},409);return reply({id:existing.data.id,status:existing.data.status});}

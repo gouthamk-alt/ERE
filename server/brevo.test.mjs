@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { syncBrevoContact } from './brevo.mjs';
+import { syncBrevoContact, createBrevoCampaign } from './brevo.mjs';
 import { createMarketingService } from './marketing.mjs';
 
 const email = 'visitor@example.com';
@@ -36,6 +36,19 @@ test('local opt-out removes an existing Brevo subscriber from the website list',
   assert.deepEqual(JSON.parse(requests[1].options.body), { emails: [email] });
 });
 
+test('Brevo campaign draft targets both approved lists and includes its unsubscribe link', async () => {
+  let request;
+  const id = await createBrevoCampaign({ apiKey: 'test-key', sender: 'wendy@exceptionalrealestate.com.au', site: 'https://ere.example', listIds: [4, 7], draft: { title: 'Perth update', subject: 'November news', preheader: '<News>', bodyHtml: '<h1>Market update</h1><a href="/properties">Properties</a><script>alert(1)</script>', attachmentUrl: '' }, fetcher: async (url, options) => { request = { url, options }; return json({ id: 29 }, 201); } });
+  assert.equal(id, 29);
+  assert.equal(request.url, 'https://api.brevo.com/v3/emailCampaigns');
+  const payload = JSON.parse(request.options.body);
+  assert.deepEqual(payload.recipients, { listIds: [4, 7] });
+  assert.deepEqual(payload.sender, { name: 'Wendy Chia', email: 'wendy@exceptionalrealestate.com.au' });
+  assert.match(payload.htmlContent, /href="https:\/\/ere.example\/properties"/);
+  assert.match(payload.htmlContent, /href="{{ unsubscribe }}"/);
+  assert.doesNotMatch(payload.htmlContent, /<script>|<News>/);
+});
+
 function memory() {
   const entries = new Map();
   return {
@@ -68,4 +81,23 @@ test('confirmed website contact syncs on retry, and a Brevo unsubscribe is authe
   assert.equal((await service.handle(new Request(endpoint, { method: 'POST', headers: { Authorization: 'Bearer test-webhook-token' }, body: JSON.stringify({ event: 'unsubscribe', email }) }))).status, 200);
   const contacts = await (await service.handle(new Request('https://ere.example/api/admin/contacts'))).json();
   assert.equal(contacts.items[0].suppressed, true);
+});
+
+test('admin can prepare one Brevo draft after review without sending a campaign', async () => {
+  const store = memory(), calls = [], origin = 'https://ere.example';
+  const service = createMarketingService({ store, authorize: async () => null, env: { BREVO_API_KEY: 'test-key', BREVO_LIST_ID: '4', BREVO_LEGACY_LIST_ID: '7' }, fetcher: async (url, options) => { calls.push({ url, options }); return json({ id: 30 }, 201); } });
+  const post = (action, extra = {}) => new Request(`${origin}/api/admin/newsletters`, { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ action, ...extra }) });
+  const get = async () => (await service.handle(new Request(`${origin}/api/admin/newsletters`))).json();
+  const draft = { id: randomUUID(), title: 'Agency newsletter', subject: 'Property news', preheader: '', bodyHtml: '<p>Latest local property news</p>', attachmentUrl: '' };
+  assert.equal((await service.handle(post('save', { item: draft, revision: (await get()).revision }))).status, 200);
+  const review = await (await service.handle(post('review', { id: draft.id }))).json();
+  assert.equal(review.brevo, true);
+  const sendId = randomUUID(), input = { id: draft.id, fingerprint: review.fingerprint, sendId };
+  const first = await service.handle(post('brevoDraft', input));
+  assert.equal(first.status, 201);
+  assert.equal((await first.json()).campaignId, 30);
+  assert.equal((await service.handle(post('brevoDraft', input))).status, 200);
+  assert.equal(calls.length, 1);
+  assert.equal((await get()).brevoDrafts.length, 1);
+  assert.equal((await service.handle(post('send', input))).status, 409);
 });
