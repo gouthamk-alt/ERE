@@ -88,7 +88,7 @@ test('admin can prepare one Brevo draft after review without sending a campaign'
   const service = createMarketingService({ store, authorize: async () => null, env: { BREVO_API_KEY: 'test-key', BREVO_LIST_ID: '4', BREVO_LEGACY_LIST_ID: '7' }, fetcher: async (url, options) => { calls.push({ url, options }); return json({ id: 30 }, 201); } });
   const post = (action, extra = {}) => new Request(`${origin}/api/admin/newsletters`, { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ action, ...extra }) });
   const get = async () => (await service.handle(new Request(`${origin}/api/admin/newsletters`))).json();
-  const draft = { id: randomUUID(), title: 'Agency newsletter', subject: 'Property news', preheader: '', bodyHtml: '<p>Latest local property news</p>', attachmentUrl: '' };
+  const draft = { id: randomUUID(), title: 'Agency newsletter', subject: 'Property news', preheader: '', bodyHtml: '<p>Latest local property news</p><a href="/properties">Listings</a>', attachmentUrl: '' };
   assert.equal((await service.handle(post('save', { item: draft, revision: (await get()).revision }))).status, 200);
   const review = await (await service.handle(post('review', { id: draft.id }))).json();
   assert.equal(review.brevo, true);
@@ -98,6 +98,7 @@ test('admin can prepare one Brevo draft after review without sending a campaign'
   assert.equal((await first.json()).campaignId, 30);
   assert.equal((await service.handle(post('brevoDraft', input))).status, 200);
   assert.equal(calls.length, 1);
+  assert.match(JSON.parse(calls[0].options.body).htmlContent, /https:\/\/exceptionalrealestate\.netlify\.app\/properties/);
   assert.equal((await get()).brevoDrafts.length, 1);
   assert.equal((await service.handle(post('send', input))).status, 409);
 });

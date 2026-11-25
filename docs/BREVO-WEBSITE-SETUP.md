@@ -9,6 +9,7 @@ Brevo sends marketing campaigns and reports delivery, opens and clicks. Microsof
 - Create a Brevo API key specifically for this website. Store it only as the Netlify production environment variable `BREVO_API_KEY`. Never commit or paste it into the site.
 - Set `BREVO_LIST_ID=4` in Netlify production. The server syncs pending contacts every two minutes. Preview deploys and the local site never call Brevo.
 - The newsletter admin uses the same API key to create Brevo **drafts**. It uses list `4` and the reviewed legacy list `7` (`BREVO_LEGACY_LIST_ID` can override the latter). The default campaign sender is the verified `wendy@exceptionalrealestate.com.au` (`BREVO_CAMPAIGN_SENDER` can override it). Draft creation does not send email.
+- Campaign links use the working Netlify demo URL by default. Set `NEWSLETTER_SITE_URL` to the verified main domain when its property and appraisal pages resolve to the Netlify website for everyone.
 - In Brevo, add a **marketing** webhook for unsubscribe, spam and hard bounce events. Set its URL to `https://exceptionalrealestate.com.au/api/newsletter/brevo-webhook` once that domain serves the Netlify site. Use Brevo's bearer authentication with a strong client-owned token, and store the same token as `BREVO_WEBHOOK_SECRET` in Netlify production. The Netlify demo URL can be used until the main domain is verified.
 - The Brevo campaign recipient list for ongoing newsletters should include the website list plus any reviewed legacy subscribers. Do not send to the two-person internal test list by accident.
 

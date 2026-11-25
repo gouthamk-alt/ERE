@@ -209,7 +209,7 @@ export function createMarketingService({ store, authorize, preview = false, env 
         if(brevoCampaignConfigured){
           const draft=(await readCollection('newsletters')).data.items.find(item=>item.id===input.id);
           if(!draft)return reply({error:'Newsletter not found.'},404);
-          const site=/^https:\/\//.test(env.NEWSLETTER_SITE_URL||'')?env.NEWSLETTER_SITE_URL:'https://www.exceptionalrealestate.com.au';
+          const site=/^https:\/\//.test(env.NEWSLETTER_SITE_URL||'')?env.NEWSLETTER_SITE_URL:'https://exceptionalrealestate.netlify.app';
           return reply({subject:draft.subject,html:cleanCampaignHtml(draft,site),fingerprint:hash(JSON.stringify({draft,lists:brevoCampaignLists})),brevo:true,lists:brevoCampaignLists});
         }
         const result=await audience(input.id);
@@ -225,7 +225,7 @@ export function createMarketingService({ store, authorize, preview = false, env 
         if(!draft)return reply({error:'Newsletter not found.'},404);
         const fingerprint=hash(JSON.stringify({draft,lists:brevoCampaignLists}));
         if(fingerprint!==input.fingerprint)return reply({error:'Newsletter changed. Review it again.'},409);
-        const site=/^https:\/\//.test(env.NEWSLETTER_SITE_URL||'')?env.NEWSLETTER_SITE_URL:'https://www.exceptionalrealestate.com.au';
+        const site=/^https:\/\//.test(env.NEWSLETTER_SITE_URL||'')?env.NEWSLETTER_SITE_URL:'https://exceptionalrealestate.netlify.app';
         const campaignId=await createBrevoCampaign({apiKey:env.BREVO_API_KEY,draft,listIds:brevoCampaignLists,sender:brevoSender,site,fetcher});
         const record={id:input.sendId,newsletterId:draft.id,title:draft.title,fingerprint,campaignId,status:'draft',createdAt:new Date(now()).toISOString()};
         await store.setJSON(key,record,{onlyIfNew:true});
