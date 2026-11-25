@@ -136,11 +136,8 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
         <div className="flex items-center justify-between px-6 py-4 bg-[#000000] border-b border-[#302f2f] shrink-0">
           <div className="flex items-center gap-3 text-xs text-white/70 font-inter">
             <span className="text-white font-medium">{property.category}</span>
-            <span aria-hidden="true">·</span>
             <span>{property.status}</span>
-            <span aria-hidden="true">·</span>
             <span>{property.propertyType}</span>
-            <span aria-hidden="true">·</span>
             <span className="tabular-nums">Listing #{property.id}</span>
           </div>
 
@@ -203,7 +200,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                 <p className="font-cormorant text-2xl sm:text-4xl font-normal text-white tabular-nums">
                   {displayPropertyPrice(property)}
                 </p>
-                {reaUrl && <a href={reaUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-4 text-sm text-white underline underline-offset-4 hover:text-white/70 transition-colors">View on realestate.com.au ↗<span className="sr-only"> (opens in a new tab)</span></a>}
+                {reaUrl && <a href={reaUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-4 text-sm text-white underline underline-offset-4 hover:text-white/70 transition-colors">View on realestate.com.au<span className="sr-only"> (opens in a new tab)</span></a>}
               </div>
             </div>
           </div>
@@ -359,7 +356,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                     <p className="text-xs text-neutral-700 leading-relaxed font-inter">
                       Thank you, {clientName}. Your enquiry for{' '}
                       <span className="font-semibold">{property.title}</span> has been logged.
-                      {receipt?.preview && ' Preview only — no email was sent.'}
+                      {receipt?.preview && ' Preview only, no email was sent.'}
                     </p>
                     <button
                       type="button"

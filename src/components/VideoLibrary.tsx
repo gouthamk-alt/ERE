@@ -11,7 +11,7 @@ export function VideoLibrary() {
     <section className="video-library max-w-[1200px] mx-auto px-6 py-14 sm:py-20 space-y-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-4 max-w-2xl">
-          <p className="text-xs uppercase tracking-[0.2em] text-white/60">Exceptional Real Estate · YouTube</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-white/60">Exceptional Real Estate on YouTube</p>
           <h1 className="text-4xl sm:text-5xl">Step inside.</h1>
           <p className="text-base text-white/75 leading-relaxed">Explore our property tours and short videos from across Perth.</p>
         </div>

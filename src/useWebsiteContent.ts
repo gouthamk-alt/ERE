@@ -7,6 +7,18 @@ type Content = { listings: PropertyListing[]; blogPosts: BlogPost[]; teamMembers
 type Operation = { collection: 'listings' | 'blogPosts' | 'teamMembers' | 'testimonials'; action: 'add' | 'update' | 'delete'; item?: PropertyListing | BlogPost | TeamMember | Testimonial; id?: string }
   | { collection: 'teamMembers' | 'testimonials'; action: 'reorder'; ids: string[] }
   | { action: 'import'; legacy: LegacyContent };
+function publicCopy(value: unknown): unknown {
+  if (typeof value === 'string') return value
+    .replace(/(^|\n)[ \t]*[•⦁*][ \t]*/g, '$1')
+    .replace(/[ \t]*[•⦁][ \t]*/g, '; ')
+    .replace(/[ \t]*—[ \t]*/g, ', ')
+    .replace(/[ \t]*·[ \t]*/g, ', ')
+    .replace(/&mdash;/gi, ', ')
+    .replace(/&bull;/gi, '');
+  if (Array.isArray(value)) return value.map(publicCopy);
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, publicCopy(item)]));
+  return value;
+}
 async function readResponse(response: Response): Promise<Content> {
   let data;
   try { data = await response.json(); } catch { throw new Error('Website content is unavailable. Please try again.'); }
@@ -23,7 +35,10 @@ export function useWebsiteContent() {
   const current = useRef<Content | null>(null);
   const pending = useRef(false);
   const sequence = useRef(0);
-  const accept = (data: Content) => { current.current = data; setContent(data); };
+  const accept = (data: Content) => {
+    current.current = data;
+    setContent(/^\/admin\/?$/.test(window.location.pathname) ? data : publicCopy(data) as Content);
+  };
   const refresh = useCallback(async () => {
     if (pending.current) return false;
     const request = ++sequence.current;

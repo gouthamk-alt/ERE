@@ -6,6 +6,7 @@ import imageMigration from './image-migration.json' with { type: 'json' };
 import { withContentBackups } from './content-backups.mjs';
 import zenuListings from '../staged/zenu-listings.json' with { type: 'json' };
 import zenuBaseline from '../staged/zenu-live-listings-baseline.json' with { type: 'json' };
+import reaListings from '../staged/rea-listings-preview.json' with { type: 'json' };
 
 export function migrateImageUrls(value) {
   if(typeof value==='string'){for(const [old,url] of Object.entries(imageMigration))value=value.split(old).join(url);return value;}
@@ -136,7 +137,7 @@ export function validateItem(collection, value) {
 }
 
 // The store exposes strong reads and compare-and-set writes. ETags prevent lost edits.
-export function createContentHandler({ store, authorize, backups, autoPublishZenuImport = false }) {
+export function createContentHandler({ store, authorize, backups, autoPublishZenuImport = false, autoPublishReaImport = false }) {
   if(backups)store=withContentBackups(store,backups);
   async function read() {
     let entry = await store.getWithMetadata(KEY, { type: 'json' });
@@ -159,6 +160,18 @@ export function createContentHandler({ store, authorize, backups, autoPublishZen
       await store.setJSON(KEY, data, { onlyIfMatch: entry.etag });
       entry = await store.getWithMetadata(KEY, { type: 'json' });
       if (!entry) throw new Error('Storage unavailable after import');
+      entry.data = migrateImageUrls(entry.data);
+    }
+    // Apply the reviewed Ignite catalogue only to the exact Zenu release it was
+    // prepared from. A later admin edit must be reviewed before any replacement.
+    if (autoPublishReaImport && canonical(entry.data.listings) === canonical(zenuListings)) {
+      const listings = reaListings.map(item => validateItem('listings', item));
+      if (new Set(listings.map(item => item.id)).size !== listings.length || listings.some(item => !entry.data.teamMembers.some(member => member.id === item.agentId) || (item.coAgentId && !entry.data.teamMembers.some(member => member.id === item.coAgentId)))) throw new Error('Prepared Ignite listings failed validation');
+      const data = { ...entry.data, listings };
+      if (JSON.stringify(data).length > 3000000) throw new Error('Prepared content is too large');
+      await store.setJSON(KEY, data, { onlyIfMatch: entry.etag });
+      entry = await store.getWithMetadata(KEY, { type: 'json' });
+      if (!entry) throw new Error('Storage unavailable after Ignite import');
       entry.data = migrateImageUrls(entry.data);
     }
     return entry;

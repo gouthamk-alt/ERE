@@ -1,0 +1,550 @@
+{
+  "source": "rea-export-2026-11-25.xml",
+  "count": 129,
+  "statusCounts": {
+    "Available": 20,
+    "Under Offer": 3,
+    "Sold": 46,
+    "Leased": 42,
+    "Off-Market": 18
+  },
+  "added": [
+    {
+      "id": "2723868",
+      "address": "2 & 3/48 Bullcreek Road, Rossmoyne WA 6148",
+      "status": "Off-Market",
+      "category": "Residential Sale",
+      "reaUrl": "https://www.realestate.com.au/148505024"
+    },
+    {
+      "id": "2727966",
+      "address": "3/48 Bullcreek Road, Rossmoyne WA 6148",
+      "status": "Off-Market",
+      "category": "Residential Sale",
+      "reaUrl": "https://www.realestate.com.au/148561484"
+    },
+    {
+      "id": "2754345",
+      "address": "49 Fisher Street, Belmont WA 6104",
+      "status": "Off-Market",
+      "category": "Residential Sale",
+      "reaUrl": "https://www.realestate.com.au/148809128"
+    },
+    {
+      "id": "2796515",
+      "address": "10 Fitzroy Street, Queens Park WA 6107",
+      "status": "Off-Market",
+      "category": "Residential Sale",
+      "reaUrl": "https://www.realestate.com.au/149329900"
+    },
+    {
+      "id": "2796472",
+      "address": "11 O'Dell Street, Thornlie WA 6108",
+      "status": "Off-Market",
+      "category": "Residential Sale",
+      "reaUrl": "https://www.realestate.com.au/149424968"
+    },
+    {
+      "id": "2812494",
+      "address": "48 Bull Creek Road, Rossmoyne WA 6148",
+      "status": "Off-Market",
+      "category": "Residential Sale",
+      "reaUrl": "https://www.realestate.com.au/149603816"
+    },
+    {
+      "id": "2805750",
+      "address": "4/10 Fitzroy Street, Queens Park WA 6107",
+      "status": "Off-Market",
+      "category": "Residential Sale",
+      "reaUrl": "https://www.realestate.com.au/150196956"
+    },
+    {
+      "id": "2885745",
+      "address": "4/10 Fitzroy Street, Queens Park WA 6107",
+      "status": "Off-Market",
+      "category": "Residential Sale",
+      "reaUrl": "https://www.realestate.com.au/150209392"
+    },
+    {
+      "id": "9fef3d0e-0c96-4230-9baa-3265d7ffa83a",
+      "address": "22 Buckingham Road, Kelmscott WA 6111",
+      "status": "Available",
+      "category": "Residential Sale",
+      "reaUrl": "https://www.realestate.com.au/152815760"
+    },
+    {
+      "id": "a37b489a-56c1-4143-8aec-d9231f73a621",
+      "address": "5 Meuse Fairway, Queens Park WA 6107",
+      "status": "Available",
+      "category": "Residential Sale",
+      "reaUrl": "https://www.realestate.com.au/152930516"
+    },
+    {
+      "id": "23eddc44-8732-4aef-973d-8cc452a23357",
+      "address": "10 Rhone Way, Piara Waters WA 6112",
+      "status": "Leased",
+      "category": "Leased",
+      "reaUrl": "https://www.realestate.com.au/444381152"
+    },
+    {
+      "id": "f6cbe010-bc71-44a7-aa94-f21d16639972",
+      "address": "3/144 Wharf Street, Cannington WA 6107",
+      "status": "Leased",
+      "category": "Leased",
+      "reaUrl": "https://www.realestate.com.au/444394304"
+    },
+    {
+      "id": "6482aac1-d3b3-4b8c-88a4-af9467430b52",
+      "address": "344/C Coode Street, Dianella WA 6059",
+      "status": "Leased",
+      "category": "Leased",
+      "reaUrl": "https://www.realestate.com.au/444649408"
+    },
+    {
+      "id": "4d2c246c-b5fa-4b95-ae76-83ec0556fe93",
+      "address": "26B Matheson Rd, Applecross WA 6153",
+      "status": "Leased",
+      "category": "Leased",
+      "reaUrl": "https://www.realestate.com.au/444654900"
+    },
+    {
+      "id": "6813b72a-5efe-4393-905c-a75b4218433d",
+      "address": "302/239 Great Eastern Highway, Belmont WA 6104",
+      "status": "Leased",
+      "category": "Leased",
+      "reaUrl": "https://www.realestate.com.au/444909772"
+    },
+    {
+      "id": "7e4c26fb-368e-4ae2-b75e-9e5449cf6505",
+      "address": "32/35 Hastings Street, Scarborough WA 6019",
+      "status": "Leased",
+      "category": "Leased",
+      "reaUrl": "https://www.realestate.com.au/445118692"
+    },
+    {
+      "id": "2ceaec39-868e-4689-9af8-aa486adf5a8f",
+      "address": "13 Wheaton Street, Southern River WA 6110",
+      "status": "Leased",
+      "category": "Leased",
+      "reaUrl": "https://www.realestate.com.au/445124916"
+    },
+    {
+      "id": "62a23530-03ec-4cf4-8129-e6b32de2068c",
+      "address": "14/8 Riversdale Road, Burswood WA 6100",
+      "status": "Leased",
+      "category": "Leased",
+      "reaUrl": "https://www.realestate.com.au/445156620"
+    },
+    {
+      "id": "7ac188da-28e8-47e3-9690-bc71ac793669",
+      "address": "1804/110 Plain St, East Perth WA 6004",
+      "status": "Available",
+      "category": "Residential Lease",
+      "reaUrl": "https://www.realestate.com.au/445337596"
+    },
+    {
+      "id": "0a81cc74-aebd-4817-9852-c202066816c3",
+      "address": "127 Douglas Avenue, South Perth WA 6151",
+      "status": "Available",
+      "category": "Residential Lease",
+      "reaUrl": "https://www.realestate.com.au/445385964"
+    },
+    {
+      "id": "d046f10a-cff5-413b-896a-4ef67a824ed9",
+      "address": "2203/110 Plain Street, East Perth WA 6004",
+      "status": "Leased",
+      "category": "Leased",
+      "reaUrl": "https://www.realestate.com.au/445501472"
+    },
+    {
+      "id": "93bd741d-bd97-4ef5-8a4b-5ece629f0124",
+      "address": "2103/110 Plain Street, East Perth WA 6004",
+      "status": "Available",
+      "category": "Residential Lease",
+      "reaUrl": "https://www.realestate.com.au/445501516"
+    },
+    {
+      "id": "9c637087-68aa-4932-9d46-7a19eceb089a",
+      "address": "7/144 Wharf Street, Cannington WA 6107",
+      "status": "Available",
+      "category": "Residential Lease",
+      "reaUrl": "https://www.realestate.com.au/445574468"
+    },
+    {
+      "id": "2754477",
+      "address": "10 Cole Road, Sawyers Valley WA 6074",
+      "status": "Off-Market",
+      "category": "Residential Sale",
+      "reaUrl": "https://www.realestate.com.au/204289336"
+    },
+    {
+      "id": "b2aa0179645d4bc09554b34853f87c22",
+      "address": "144 Wharf St, Cannington WA 6107",
+      "status": "Off-Market",
+      "category": "Residential Sale",
+      "reaUrl": "https://www.realestate.com.au/204318444"
+    },
+    {
+      "id": "2796472-204334552",
+      "address": "11 O'Dell Street, Thornlie WA 6108",
+      "status": "Off-Market",
+      "category": "Residential Sale",
+      "reaUrl": "https://www.realestate.com.au/204334552"
+    },
+    {
+      "id": "2846672",
+      "address": "65 Tuart Street, South Bunbury WA 6230",
+      "status": "Off-Market",
+      "category": "Residential Sale",
+      "reaUrl": "https://www.realestate.com.au/204390052"
+    },
+    {
+      "id": "3086142-204570160",
+      "address": "144 Wharf Street, Cannington WA 6107",
+      "status": "Sold",
+      "category": "Sold",
+      "reaUrl": "https://www.realestate.com.au/204570160"
+    },
+    {
+      "id": "1e29ce0d-2364-42ff-86b8-414965168d85",
+      "address": "Address available on request, Wellard WA 6170",
+      "status": "Available",
+      "category": "Residential Sale",
+      "reaUrl": "https://www.realestate.com.au/204659060"
+    },
+    {
+      "id": "4ea74b03-9bb6-4466-b3b0-e58ebb171761",
+      "address": "Address available on request, Mariginiup WA 6078",
+      "status": "Available",
+      "category": "Residential Sale",
+      "reaUrl": "https://www.realestate.com.au/204714928"
+    }
+  ],
+  "changed": [
+    {
+      "id": "2741532",
+      "address": "51A Bedford Rd, Ardross WA 6153",
+      "from": "Sold",
+      "to": "Sold",
+      "priceDisplay": "UNDER OFF BY WENDY CHIA"
+    },
+    {
+      "id": "2741534",
+      "address": "5 Goldfields Loop, Wandi WA 6167",
+      "from": "Sold",
+      "to": "Sold",
+      "priceDisplay": "CONTACT AGENT FOR PRICE GUIDE"
+    },
+    {
+      "id": "2741535",
+      "address": "12 Vanda Place, Maddington WA 6109",
+      "from": "Sold",
+      "to": "Sold",
+      "priceDisplay": "UNDER OFFER BY TEAM CHIA"
+    },
+    {
+      "id": "2741536",
+      "address": "24 Zambezi St, Southern River WA 6110",
+      "from": "Sold",
+      "to": "Sold",
+      "priceDisplay": "Contact Agent"
+    },
+    {
+      "id": "2741537",
+      "address": "31 Parakeela Grove, Maddington WA 6109",
+      "from": "Sold",
+      "to": "Sold",
+      "priceDisplay": "Please Contact Agent for Price Guide"
+    },
+    {
+      "id": "2741538",
+      "address": "3/1 Silas St, East Fremantle WA 6158",
+      "from": "Sold",
+      "to": "Sold",
+      "priceDisplay": "UNDER OFF BY TEAM CHIA"
+    },
+    {
+      "id": "2741539",
+      "address": "15 Gabbro Lane, Piara Waters WA 6112",
+      "from": "Sold",
+      "to": "Sold",
+      "priceDisplay": "UNDER OFFER BY TEAM CHIA"
+    },
+    {
+      "id": "2741540",
+      "address": "16 Apus Loop, Waterford WA 6152",
+      "from": "Sold",
+      "to": "Sold",
+      "priceDisplay": "UNDER OFFER BY TEAM CHIA"
+    },
+    {
+      "id": "2741541",
+      "address": "808/118 Goodwood Pde., Burswood WA 6100",
+      "from": "Sold",
+      "to": "Sold",
+      "priceDisplay": "UNDER OFFER BY TEAM CHIA"
+    },
+    {
+      "id": "2741542",
+      "address": "16 Canning Parade, Como WA 6152",
+      "from": "Available",
+      "to": "Off-Market",
+      "priceDisplay": "EXPRESSIONS OF INTEREST"
+    },
+    {
+      "id": "2741543",
+      "address": "39/8 Hawksburn Rd, Rivervale WA 6103",
+      "from": "Under Offer",
+      "to": "Sold",
+      "priceDisplay": "UNDER OFFER BY TEAM CHIA!"
+    },
+    {
+      "id": "3086142",
+      "address": "1/144 Wharf Street, Cannington WA 6107",
+      "from": "Sold",
+      "to": "Sold",
+      "priceDisplay": "PRICE GUIDE | FROM $399K"
+    },
+    {
+      "id": "2741546",
+      "address": "12 Tambelyn St, Clarkson WA 6030",
+      "from": "Under Offer",
+      "to": "Sold",
+      "priceDisplay": "UNDER OFFER BY TEAM CHIA - HOME OPEN CANCELLED!!"
+    },
+    {
+      "id": "2760655",
+      "address": "11A Bridge Street, Wilson WA 6107",
+      "from": "Sold",
+      "to": "Sold",
+      "priceDisplay": "SOLD BY TEAM CHIA - HOME OPEN CANCELLED"
+    },
+    {
+      "id": "2969981",
+      "address": "4 Belleview Crescent, Dianella WA 6059",
+      "from": "Available",
+      "to": "Off-Market",
+      "priceDisplay": "ON HOLD"
+    },
+    {
+      "id": "3081541",
+      "address": "502/239 Great Eastern Highway, Belmont WA 6104",
+      "from": "Under Offer",
+      "to": "Sold",
+      "priceDisplay": "Contact Agent"
+    },
+    {
+      "id": "3081688",
+      "address": "6/48-50 Armstrong Road, Wilson WA 6107",
+      "from": "Available",
+      "to": "Available",
+      "priceDisplay": "EXPRESSION OF INTEREST"
+    },
+    {
+      "id": "3085832",
+      "address": "2/1 Stockton Bend, Cockburn Central WA 6164",
+      "from": "Available",
+      "to": "Available",
+      "priceDisplay": "Mid to High $500K'S"
+    },
+    {
+      "id": "3104971",
+      "address": "298 KEYMER STREET, Cloverdale WA 6105",
+      "from": "Available",
+      "to": "Available",
+      "priceDisplay": "Inquire for private viewing"
+    },
+    {
+      "id": "3133458",
+      "address": "14A Sill Street, Bentley WA 6102",
+      "from": "Available",
+      "to": "Available",
+      "priceDisplay": "Offers above $749,000"
+    },
+    {
+      "id": "3104935",
+      "address": "2/30 METHUEN WAY, Duncraig WA 6023",
+      "from": "Available",
+      "to": "Off-Market",
+      "priceDisplay": "ABOVE $949,000"
+    },
+    {
+      "id": "3133187",
+      "address": "15/193 Hay St, East Perth WA 6004",
+      "from": "Under Offer",
+      "to": "Sold",
+      "priceDisplay": "Contact Agent"
+    },
+    {
+      "id": "3133186",
+      "address": "7 Beautiful Road, Banksia Grove WA 6031",
+      "from": "Under Offer",
+      "to": "Sold",
+      "priceDisplay": "Expression of Interest"
+    },
+    {
+      "id": "2847250",
+      "address": "344C Coode Street, Dianella WA 6059",
+      "from": "Leased",
+      "to": "Leased",
+      "priceDisplay": "$850 per week"
+    },
+    {
+      "id": "2741548",
+      "address": "6/144 Wharf Street, Cannington WA 6107",
+      "from": "Under Offer",
+      "to": "Leased",
+      "priceDisplay": "$800 per week"
+    },
+    {
+      "id": "2741549",
+      "address": "3/144 Wharf Street, Cannington WA 6107",
+      "from": "Leased",
+      "to": "Leased",
+      "priceDisplay": "$800 per week"
+    },
+    {
+      "id": "3082365",
+      "address": "12 Tambelyn Street, Clarkson WA 6030",
+      "from": "Leased",
+      "to": "Leased",
+      "priceDisplay": "$575 per week"
+    },
+    {
+      "id": "3082366",
+      "address": "1/18 Webster Street, Nedlands WA 6009",
+      "from": "Leased",
+      "to": "Leased",
+      "priceDisplay": "$650 per week"
+    },
+    {
+      "id": "3082367",
+      "address": "81 Mcmillan Street, Victoria Park WA 6100",
+      "from": "Leased",
+      "to": "Leased",
+      "priceDisplay": "$650 per week"
+    },
+    {
+      "id": "2741547",
+      "address": "344c Coode Street, Dianella WA 6059",
+      "from": "Leased",
+      "to": "Leased",
+      "priceDisplay": "$800 per week"
+    },
+    {
+      "id": "3081922",
+      "address": "6 Dewey Street, Shelley WA 6148",
+      "from": "Leased",
+      "to": "Leased",
+      "priceDisplay": "$1,050 per week"
+    },
+    {
+      "id": "3081959",
+      "address": "14/8 Riversdale Road, Burswood WA 6100",
+      "from": "Leased",
+      "to": "Leased",
+      "priceDisplay": "$780 per week"
+    },
+    {
+      "id": "3088163",
+      "address": "3/59 Collier Road, Morley WA 6062",
+      "from": "Leased",
+      "to": "Leased",
+      "priceDisplay": "$760 per week"
+    },
+    {
+      "id": "3091933",
+      "address": "308/239 Great Eastern Highway, Belmont WA 6104",
+      "from": "Leased",
+      "to": "Leased",
+      "priceDisplay": "$900 per week"
+    },
+    {
+      "id": "3110704",
+      "address": "72/155 Adelaide Terrace, East Perth WA 6004",
+      "from": "Leased",
+      "to": "Leased",
+      "priceDisplay": "$650 per week"
+    },
+    {
+      "id": "3128315",
+      "address": "21 THE ANCHORAGE, Maylands WA 6051",
+      "from": "Leased",
+      "to": "Leased",
+      "priceDisplay": "$970 per week"
+    },
+    {
+      "id": "3128658",
+      "address": "26D Matheson Road, Applecross WA 6153",
+      "from": "Available",
+      "to": "Leased",
+      "priceDisplay": "$1,550 per week"
+    },
+    {
+      "id": "2741550",
+      "address": "2005 Albany Hwy, Maddington WA 6109",
+      "from": "Sold",
+      "to": "Sold",
+      "priceDisplay": "SOLD BY TEAM CHIA"
+    },
+    {
+      "id": "2741551",
+      "address": "166 Keane St, Cloverdale WA 6105",
+      "from": "Under Offer",
+      "to": "Sold",
+      "priceDisplay": "UNDER OFFER BY TEAM CHIA"
+    },
+    {
+      "id": "3032943",
+      "address": "57 Balmoral Road, Pegs Creek WA 6714",
+      "from": "Under Offer",
+      "to": "Under Offer",
+      "priceDisplay": "UNDER OFFER BY WENDY CHIA"
+    },
+    {
+      "id": "3111984",
+      "address": "90 Red Swamp Place, York WA 6302",
+      "from": "Available",
+      "to": "Available",
+      "priceDisplay": "CONTACT AGENT FOR PRICE GUIDE"
+    },
+    {
+      "id": "2741553",
+      "address": "986 Great Northern Hwy, Millendon WA 6056",
+      "from": "Available",
+      "to": "Off-Market",
+      "priceDisplay": "EXPRESSION OF INTEREST"
+    },
+    {
+      "id": "2785232",
+      "address": "451 Chittering Valley Road, Lower Chittering WA 6084",
+      "from": "Available",
+      "to": "Available",
+      "priceDisplay": "CONTACT AGENT FOR PRICE GUIDE"
+    },
+    {
+      "id": "3091919",
+      "address": "C/344 Coode Street, Dianella WA 6059",
+      "from": "Available",
+      "to": "Off-Market",
+      "priceDisplay": "$870 per week"
+    },
+    {
+      "id": "3074757",
+      "address": "00 Address available upon request, Duncraig WA 6023",
+      "from": "Available",
+      "to": "Off-Market",
+      "priceDisplay": "Contact Agent"
+    }
+  ],
+  "warnings": [
+    {
+      "id": "204334552",
+      "issue": "Duplicate source uniqueID 2796472; REA listing ID added to website ID"
+    },
+    {
+      "id": "204570160",
+      "issue": "Duplicate source uniqueID 3086142; REA listing ID added to website ID"
+    }
+  ]
+}

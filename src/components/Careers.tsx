@@ -37,7 +37,7 @@ export function Careers({onSubmitEnquiry}:{onSubmitEnquiry:SubmitEnquiry}) {
   return (
     <section className="careers-page max-w-[1100px] mx-auto px-6 py-14 sm:py-20 space-y-14">
       <div className="max-w-3xl space-y-5">
-        <p className="text-xs uppercase tracking-[0.2em] text-white/60">Careers · Exceptional Real Estate</p>
+        <p className="text-xs uppercase tracking-[0.2em] text-white/60">Careers at Exceptional Real Estate</p>
         <h1 className="text-4xl sm:text-5xl lg:text-6xl" style={{ textWrap: 'balance' }}>Build your next chapter with us.</h1>
         <p className="text-base sm:text-lg text-white/75 leading-relaxed">Join our boutique real estate team in Applecross and help people make their next move across Perth.</p>
       </div>

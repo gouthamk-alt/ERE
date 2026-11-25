@@ -11,9 +11,7 @@ import {
   Bed,
   Bath,
   Car,
-  ArrowUpRight,
   MapPin,
-  ArrowLeft,
   Calendar,
   User,
 } from 'lucide-react';
@@ -124,7 +122,7 @@ export default function App() {
     email: '',
     phone: '',
     propertyAddress: '',
-    serviceInterest: 'Sell with us — Free Sales Appraisal',
+    serviceInterest: 'Sell with us: Free Sales Appraisal',
     preferredAgent: 'Wendy Chia (Director & Licensee)',
     notes: '',
     newsletterOptIn:true,
@@ -245,6 +243,7 @@ export default function App() {
   // Filtered Listings
   const filteredListings = useMemo(() => {
     return listings.filter((item) => {
+      if (item.status === 'Off-Market') return false;
       if (selectedCategory === 'ALL' && ['Sold', 'Leased'].includes(item.status)) return false;
       if (selectedCategory !== 'ALL' && item.category !== selectedCategory) {
         return false;
@@ -283,11 +282,11 @@ export default function App() {
   ]);
 
   const homeDisplayedListings = useMemo(() => {
-    return filteredListings.slice(0, 6);
+    return filteredListings.filter(item => item.title !== 'Address available on request').slice(0, 6);
   }, [filteredListings]);
 
   const commercialListings = useMemo(
-    () => listings.filter((l) => l.category === 'Commercial' || l.id === '2997890'),
+    () => listings.filter((l) => l.status !== 'Off-Market' && (l.category === 'Commercial' || l.id === '2997890')),
     [listings]
   );
 
@@ -568,14 +567,14 @@ export default function App() {
                 onClick={() => navigateTo('listings', 'Residential Sale')}
                 className="text-left py-1 text-white"
               >
-                Buy — Residential For Sale
+                Residential sales
               </button>
               <button
                 type="button"
                 onClick={() => navigateTo('listings', 'Residential Lease')}
                 className="text-left py-1 text-white"
               >
-                Lease — Residential & Commercial
+                Residential and commercial leasing
               </button>
               <button
                 type="button"
@@ -651,13 +650,9 @@ export default function App() {
                 <div className="max-w-[780px]">
                   {/* Left 7 Columns: Editorial Headline & Subtext */}
                   <div className="space-y-5">
-                    <div className="flex items-center gap-2.5 text-xs uppercase tracking-[0.2em] text-white/75 font-inter">
-                      <span>Applecross</span>
-                      <span>·</span>
-                      <span>Perth Western Australia</span>
-                    </div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-white/75 font-inter">Applecross, Perth</p>
                     <h1
-                      className="font-cormorant text-[40px] sm:text-[56px] lg:text-[64px] leading-[1.05] font-light text-white tracking-tight"
+                      className="site-hero-title text-[40px] sm:text-[56px] lg:text-[64px] text-white"
                       style={{ textWrap: 'balance' }}
                     >
                       Your next chapter begins with us.
@@ -856,7 +851,7 @@ export default function App() {
                   <p className="text-xs text-white/60">{contentReady ? `Showing ${homeDisplayedListings.length} of ${filteredListings.length} properties.` : 'Explore our current properties'}</p>
                   <div className="flex flex-wrap items-center gap-3">
                     <button type="button" onClick={() => navigateTo('listings')} className="zenu-button inline-flex gap-2">
-                      View all properties <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
+                      View all properties
                     </button>
                   </div>
                 </div>
@@ -868,11 +863,11 @@ export default function App() {
               <div className="max-w-[1200px] mx-auto space-y-10">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                   <div className="max-w-2xl space-y-4">
-                    <p className="accent-label text-xs uppercase tracking-[0.2em]">Applecross · Licence No. RA84388</p>
+                    <p className="accent-label text-xs uppercase tracking-[0.2em]">Applecross, Licence No. RA84388</p>
                     <h2 className="font-cormorant text-4xl sm:text-5xl text-white">People who know<br />your neighbourhood.</h2>
                     <p className="text-sm sm:text-base text-white/70 font-light leading-relaxed">Meet the people behind your next move, at our office on Kintail Road.</p>
                   </div>
-                  <button type="button" onClick={() => navigateTo('team')} className="accent-link inline-flex items-center gap-2 text-sm cursor-pointer">Meet our full team <ArrowUpRight className="w-4 h-4" aria-hidden="true" /></button>
+                  <button type="button" onClick={() => navigateTo('team')} className="accent-link inline-flex items-center gap-2 text-sm cursor-pointer">Meet our full team</button>
                 </div>
                 <div className="home-team-grid grid grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-8" aria-busy={!contentReady}>
                   {!contentReady && !contentError && Array.from({ length: 4 }, (_, index) => (
@@ -886,7 +881,7 @@ export default function App() {
                       <div className="pt-4">
                         <h3 className="font-cormorant text-2xl sm:text-3xl">{member.name}</h3>
                         <p className="text-xs text-white/60 mt-1">{member.role}</p>
-                        <span className="accent-link inline-flex items-center gap-2 text-xs mt-3">View profile <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" /></span>
+                        <span className="accent-link inline-flex items-center gap-2 text-xs mt-3">View profile</span>
                       </div>
                     </button>
                   ))}
@@ -906,11 +901,11 @@ export default function App() {
                 <div className="commercial-band-scrim absolute inset-0" />
                 <div className="relative max-w-[1200px] mx-auto px-6 py-20 sm:py-28 min-h-[500px] flex flex-col justify-end">
                   <div className="max-w-xl space-y-5">
-                    <p className="accent-label text-xs uppercase tracking-[0.22em]">For your business · Perth commercial</p>
+                    <p className="accent-label text-xs uppercase tracking-[0.22em]">Perth commercial</p>
                     <h2 id="commercial-heading" className="font-cormorant text-5xl sm:text-6xl text-white">A place for your<br />next chapter.</h2>
                     <p className="text-sm sm:text-base font-light text-white/80 leading-relaxed max-w-lg">Sales and leasing across Perth’s commercial precincts. Local knowledge, with a broader perspective.</p>
                     <div className="flex flex-wrap gap-4 items-center pt-3">
-                      <button type="button" onClick={() => navigateTo('listings', 'Commercial')} className="zenu-button inline-flex gap-2">Explore commercial <ArrowUpRight className="w-4 h-4" aria-hidden="true" /></button>
+                      <button type="button" onClick={() => navigateTo('listings', 'Commercial')} className="zenu-button inline-flex gap-2">Explore commercial</button>
                       <button type="button" onClick={() => setSelectedProperty(commercialListings[0])} className="accent-link text-sm underline cursor-pointer">View {commercialListings[0].title}</button>
                     </div>
                   </div>
@@ -947,7 +942,7 @@ export default function App() {
                       </div>
                       <div className="lg:col-span-5 py-8 lg:py-10 lg:pl-12 flex flex-col justify-center space-y-5">
                         <span className="text-xs uppercase tracking-widest text-white/60">
-                          {latestBlogHighlight.category} · {latestBlogHighlight.date}
+                          {latestBlogHighlight.category}, {latestBlogHighlight.date}
                         </span>
                         <h3 className="font-cormorant text-3xl sm:text-4xl font-light text-white leading-tight">
                           {latestBlogHighlight.title}
@@ -984,7 +979,7 @@ export default function App() {
                   {selectedCategory === 'ALL' ? 'Current Listings' : selectedCategory}
                 </h1>
               </div>
-              <p className="text-xs text-white/65 font-inter">{contentReady ? `Showing ${filteredListings.length} of ${listings.length} properties across Greater Perth` : 'Explore properties across Greater Perth'}</p>
+              <p className="text-xs text-white/65 font-inter">{contentReady ? `Showing ${filteredListings.length} properties across Greater Perth` : 'Explore properties across Greater Perth'}</p>
             </div>
 
             {/* Filter Bar */}
@@ -1091,7 +1086,7 @@ export default function App() {
                 Book an Appraisal
               </h2>
               <p className="text-center text-xs text-white/70 mt-2 font-inter">
-                2/28 Kintail Road, Applecross 6153 · Personalised guidance. Results that speak.
+                2/28 Kintail Road, Applecross 6153. Personalised guidance. Results that speak.
               </p>
 
               {appraisalSubmitted ? (
@@ -1136,14 +1131,14 @@ export default function App() {
                         }
                         className="zenu-input w-full"
                       >
-                        <option value="Sell with us — Free Sales Appraisal">
-                          Sell with us — Free Sales Appraisal
+                        <option value="Sell with us: Free Sales Appraisal">
+                          Sell with us: Free Sales Appraisal
                         </option>
-                        <option value="Lease with us — Property Management Appraisal">
-                          Lease with us — Property Management Appraisal
+                        <option value="Lease with us: Property Management Appraisal">
+                          Lease with us: Property Management Appraisal
                         </option>
-                        <option value="Build with us — Development & Construction">
-                          Build with us — Development & Construction
+                        <option value="Build with us: Development & Construction">
+                          Build with us: Development & Construction
                         </option>
                         <option value="Commercial Sale / Lease Enquiry">
                           Commercial Sale / Lease Enquiry
@@ -1167,7 +1162,7 @@ export default function App() {
                       >
                         {teamMembers.map((m) => (
                           <option key={m.id} value={`${m.name} (${m.role})`}>
-                            {m.name} — {m.role}
+                            {m.name}, {m.role}
                           </option>
                         ))}
                       </select>
@@ -1282,7 +1277,7 @@ export default function App() {
                       <p className="text-xs text-white/70 font-light leading-relaxed">
                         {member.bio}
                       </p>
-                      <span className="inline-flex items-center gap-2 text-xs text-white/80 mt-5">View profile <ArrowUpRight className="w-4 h-4" aria-hidden="true" /></span>
+                      <span className="inline-flex items-center gap-2 text-xs text-white/80 mt-5">View profile</span>
                     </div>
                   </div>
                   </button>
@@ -1332,7 +1327,6 @@ export default function App() {
                   onClick={() => setSelectedBlogPostId(null)}
                   className="inline-flex items-center gap-2 text-xs font-inter text-white/80 hover:text-white cursor-pointer"
                 >
-                  <ArrowLeft className="w-4 h-4" />
                   Back to All Blog Articles
                 </button>
 
@@ -1444,7 +1438,7 @@ export default function App() {
                     <div className="lg:col-span-5 py-8 lg:py-10 lg:pl-12 flex flex-col justify-center space-y-4">
                       <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-white/60">
                         <span>{filteredBlogs[0].category}</span>
-                        <span>·</span>
+                        <span className="sr-only">, </span>
                         <span>{filteredBlogs[0].date}</span>
                       </div>
                       <h2 className="font-cormorant text-3xl sm:text-4xl font-light text-white leading-tight group-hover:underline">
@@ -1459,7 +1453,6 @@ export default function App() {
                       <div className="pt-2">
                         <span className="zenu-button-outline-light inline-flex items-center gap-2">
                           Read Article
-                          <ArrowUpRight className="w-3.5 h-3.5" />
                         </span>
                       </div>
                     </div>
@@ -1500,7 +1493,6 @@ export default function App() {
                         <span>By {post.author}</span>
                         <span className="inline-flex items-center gap-1 text-white group-hover:underline">
                           Read More
-                          <ArrowUpRight className="w-3.5 h-3.5" />
                         </span>
                       </div>
                     </button>
@@ -1658,7 +1650,7 @@ export default function App() {
           </div>
 
           <div className="pt-8 border-t border-white/10 flex flex-wrap items-center justify-between gap-4 text-xs text-white/60">
-            <span>© {new Date().getFullYear()} Exceptional Real Estate · Applecross WA 6153</span>
+            <span>© {new Date().getFullYear()} Exceptional Real Estate, Applecross WA 6153</span>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <button
                 type="button"

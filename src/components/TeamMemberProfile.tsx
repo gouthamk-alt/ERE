@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { ArrowLeft, Mail, Phone } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 import { PropertyListing, TeamMember } from '../data/initialData';
 import { PropertyCard } from './PropertyCard';
 import { PropertyImage } from './PropertyImage';
@@ -25,7 +25,7 @@ export function TeamMemberProfile({ member, listings, onBack, onSelectProperty, 
   const locked = useRef(false);
   const [receipt, setReceipt] = useState<EnquiryReceipt | null>(null);
   const [newsletterOptIn,setNewsletterOptIn]=useState(true);
-  const assigned = listings.filter((property) => property.agentId === member.id || property.coAgentId === member.id);
+  const assigned = listings.filter((property) => property.status !== 'Off-Market' && (property.agentId === member.id || property.coAgentId === member.id));
   const isPast = (property: PropertyListing) => ['Sold', 'Leased'].includes(property.status) || ['Sold', 'Leased'].includes(property.category);
   const current = assigned.filter((property) => !isPast(property));
   const past = assigned.filter(isPast);
@@ -54,7 +54,7 @@ export function TeamMemberProfile({ member, listings, onBack, onSelectProperty, 
     <div className="agent-profile max-w-[1200px] mx-auto px-6 py-12 sm:py-16 space-y-20 sm:space-y-28">
       <section aria-labelledby="agent-profile-name">
         <button type="button" onClick={onBack} className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white mb-10 cursor-pointer">
-          <ArrowLeft className="w-4 h-4" aria-hidden="true" /> Back to our team
+          Back to our team
         </button>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-16 items-start">
           <div className="md:col-span-5 bg-black overflow-hidden">
@@ -62,7 +62,7 @@ export function TeamMemberProfile({ member, listings, onBack, onSelectProperty, 
           </div>
           <div className="md:col-span-7 space-y-7 md:py-6">
             <div>
-              <p className="text-xs uppercase tracking-[0.18em] text-white/60 mb-3">Exceptional Real Estate · Our team</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-white/60 mb-3">Exceptional Real Estate, Our team</p>
               <h1 id="agent-profile-name" className="font-cormorant text-5xl sm:text-6xl leading-tight">{member.name}</h1>
               <p className="text-base text-white/80 mt-3">{member.role}</p>
               {member.qualification && <p className="text-sm text-white/60 mt-2">{member.qualification}</p>}
@@ -71,11 +71,11 @@ export function TeamMemberProfile({ member, listings, onBack, onSelectProperty, 
             <dl className="space-y-5">
               {member.specialties.length > 0 && <div>
                 <dt className="text-xs uppercase tracking-widest text-white/50 mb-2">Specialties</dt>
-                <dd className="text-sm leading-relaxed text-white/80">{member.specialties.join(' · ')}</dd>
+                <dd className="text-sm leading-relaxed text-white/80">{member.specialties.join(', ')}</dd>
               </div>}
               {member.languages.length > 0 && <div>
                 <dt className="text-xs uppercase tracking-widest text-white/50 mb-2">Languages</dt>
-                <dd className="text-sm leading-relaxed text-white/80">{member.languages.join(' · ')}</dd>
+                <dd className="text-sm leading-relaxed text-white/80">{member.languages.join(', ')}</dd>
               </div>}
             </dl>
             <div className="flex flex-col items-start gap-4 text-sm">
@@ -120,7 +120,7 @@ export function TeamMemberProfile({ member, listings, onBack, onSelectProperty, 
           {formError && <p role="alert" className="text-sm text-white">{formError}</p>}
           <NewsletterOptIn checked={newsletterOptIn} onChange={setNewsletterOptIn}/>
           <button type="submit" disabled={busy || emailPrepared} className="zenu-button-outline-light inline-flex gap-2 disabled:opacity-50"><Mail className="w-4 h-4" aria-hidden="true" />{busy ? 'Submitting…' : emailPrepared ? 'Enquiry received' : 'Send enquiry'}</button>
-          {emailPrepared && <p role="status" className="text-sm leading-relaxed text-white/70">Your enquiry has been saved. {receipt?.preview ? 'Preview only — no email was sent.' : 'Our team will be in touch.'} <button type="button" className="underline" onClick={() => { setEmailPrepared(false); setForm({ name: '', email: '', phone: '', message: '' }); }}>Send another enquiry</button></p>}
+          {emailPrepared && <p role="status" className="text-sm leading-relaxed text-white/70">Your enquiry has been saved. {receipt?.preview ? 'Preview only, no email was sent.' : 'Our team will be in touch.'} <button type="button" className="underline" onClick={() => { setEmailPrepared(false); setForm({ name: '', email: '', phone: '', message: '' }); }}>Send another enquiry</button></p>}
         </form>
       </section>
       <EnquiryConfirmation receipt={receipt} onClose={() => setReceipt(null)} />

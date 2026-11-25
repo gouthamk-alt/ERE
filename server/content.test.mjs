@@ -8,6 +8,7 @@ import { createContentHandler, initialContent, validateItem } from './content.mj
 import { createLocalContentStore } from './local-content-store.mjs';
 import zenuBaseline from '../staged/zenu-live-listings-baseline.json' with { type: 'json' };
 import zenuListings from '../staged/zenu-listings.json' with { type: 'json' };
+import reaListings from '../staged/rea-listings-preview.json' with { type: 'json' };
 
 function memoryStore() {
   let entry = null, generation = 0;
@@ -74,6 +75,29 @@ test('production content read publishes the reviewed Zenu collection once', asyn
   assert.deepEqual(first.listings, zenuListings);
   const second = await (await handler(new Request('https://demo.example/api/content'))).json();
   assert.equal(second.revision, first.revision);
+});
+
+test('production content read publishes the reviewed Ignite catalogue and preserves other content', async () => {
+  const store = memoryStore();
+  const saved = { ...initialContent, listings: zenuListings, blogPosts: [{ ...initialContent.blogPosts[0], title: 'Saved office article' }] };
+  await store.setJSON('website-content-v1', saved, { onlyIfNew: true });
+  const handler = createContentHandler({ store, authorize: async () => null, autoPublishReaImport: true });
+  const first = await (await handler(new Request('https://demo.example/api/content'))).json();
+  assert.deepEqual(first.listings, reaListings);
+  assert.deepEqual(first.blogPosts, saved.blogPosts);
+  assert.deepEqual(first.teamMembers, saved.teamMembers);
+  assert.deepEqual(first.testimonials, saved.testimonials.filter(item => item.visible));
+  const second = await (await handler(new Request('https://demo.example/api/content'))).json();
+  assert.equal(second.revision, first.revision);
+});
+
+test('Ignite publication leaves changed live listings intact for review', async () => {
+  const store = memoryStore();
+  const changed = [{ ...zenuListings[0], title: 'Office update' }, ...zenuListings.slice(1)];
+  await store.setJSON('website-content-v1', { ...initialContent, listings: changed }, { onlyIfNew: true });
+  const handler = createContentHandler({ store, authorize: async () => null, autoPublishReaImport: true });
+  const response = await (await handler(new Request('https://demo.example/api/content'))).json();
+  assert.deepEqual(response.listings, changed);
 });
 
 test('Zenu publication rejects changed live listings without partial writes', async () => {

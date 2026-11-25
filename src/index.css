@@ -159,7 +159,9 @@
 }
 
 .public-site h1, .public-site h2, .public-site h3 { font-family: Arial, Helvetica, sans-serif; font-weight: 700; letter-spacing: -0.025em; line-height: 1.12; }
+.public-site .site-hero-title { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; letter-spacing: -0.035em; line-height: 1.08; }
 .public-site .font-cormorant { font-family: Arial, Helvetica, sans-serif; }
+.public-rich-text ul { list-style: none; padding-left: 0; }
 .public-site h2 { line-height: 1.12; }
 .public-site button, .public-site a { text-underline-offset: 4px; }
 .public-site :focus-visible { outline: 2px solid #a8a8a8; outline-offset: 4px; }
