@@ -1659,7 +1659,7 @@ export default function App() {
 
           <div className="pt-8 border-t border-white/10 flex flex-wrap items-center justify-between gap-4 text-xs text-white/60">
             <span>© {new Date().getFullYear()} Exceptional Real Estate · Applecross WA 6153</span>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <button
                 type="button"
                 onClick={() => navigateTo('list-with-us')}
@@ -1667,6 +1667,17 @@ export default function App() {
               >
                 Privacy Policy
               </button>
+              <span>
+                Website by{' '}
+                <a
+                  href="https://www.orbitsol.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/80 hover:text-white transition-colors"
+                >
+                  OrbitSol
+                </a>
+              </span>
             </div>
           </div>
         </div>
