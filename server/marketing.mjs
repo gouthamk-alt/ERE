@@ -1,5 +1,6 @@
 import { createHash, createHmac, timingSafeEqual, randomUUID } from 'node:crypto';
 import { cleanRichText } from './rich-text.mjs';
+import { syncBrevoContact } from './brevo.mjs';
 
 const hash = text => createHash('sha256').update(text).digest('hex');
 const reply = (body, status = 200) => Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
@@ -21,6 +22,8 @@ export function newsletterRecord(input, previous, now) {
 export function createMarketingService({ store, authorize, preview = false, env = process.env, fetcher = fetch, now = Date.now, pause = ms => new Promise(resolve => setTimeout(resolve, ms)) }) {
   const get = key => store.getWithMetadata(key, { type: 'json' });
   const configured = Boolean(env.NEWSLETTER_EMAIL_ENABLED === 'true' && env.RESEND_API_KEY && env.NEWSLETTER_FROM && env.NEWSLETTER_POSTAL_ADDRESS && env.NEWSLETTER_UNSUBSCRIBE_SECRET?.length >= 32 && /^https:\/\//.test(env.NEWSLETTER_SITE_URL || '') && env.NEWSLETTER_WEBHOOK_SECRET);
+  const brevoConfigured = Boolean(!preview && env.BREVO_API_KEY && /^\d+$/.test(env.BREVO_LIST_ID || '') && Number(env.BREVO_LIST_ID) > 0);
+  const queueBrevo = email => store.setJSON(`brevo-sync/${randomUUID()}`, { email, queuedAt: new Date(now()).toISOString() }, {onlyIfNew:true});
   const signature = id => createHmac('sha256', env.NEWSLETTER_UNSUBSCRIBE_SECRET || '').update(`unsubscribe:${id}`).digest('hex');
   async function readCollection(key) {
     let entry = await get(key);
@@ -60,6 +63,7 @@ export function createMarketingService({ store, authorize, preview = false, env 
       if((await store.setJSON('contacts',{items},{onlyIfMatch:entry.etag})).modified){savedContact=contact;break;}
     }
     if(!savedContact)throw new Error('Contact save could not be confirmed.');
+    if(confirmed && savedContact.subscription==='subscribed') await queueBrevo(savedContact.email);
     if(confirmed&&savedContact.subscription==='subscribed'){
       const edition=await get('welcome-newsletter');
       if(edition){
@@ -109,12 +113,36 @@ export function createMarketingService({ store, authorize, preview = false, env 
     await store.setJSON(key,job,{onlyIfMatch:revision.etag});
   }
   async function worker() {
+    if(brevoConfigured){
+      const pending=(await store.list({prefix:'brevo-sync/'})).blobs.slice(0,20);
+      for(const blob of pending){
+        const job=await get(blob.key);if(!job)continue;
+        const contact=(await readCollection('contacts')).data.items.find(item=>item.email===job.data.email);
+        const blocked=Boolean(await get(`suppression/${hash(job.data.email)}`));
+        try {
+          const result=await syncBrevoContact({email:job.data.email,subscription:contact?.subscription==='subscribed'&&!blocked?'subscribed':'unsubscribed',apiKey:env.BREVO_API_KEY,listId:env.BREVO_LIST_ID,fetcher});
+          if(result.status==='suppressed')await suppress(job.data.email,'brevo-opt-out');
+          await store.delete(blob.key);
+        }catch{continue;}
+      }
+    }
     if(preview||!configured)return;
     const {blobs}=await store.list({prefix:'campaigns/'});
     for(const blob of blobs){let entry=await get(blob.key);if(entry?.data.status==='waiting-for-setup'){const result=await store.setJSON(blob.key,{...entry.data,status:'queued',createdAt:new Date(now()).toISOString()},{onlyIfMatch:entry.etag});if(result.modified)entry=await get(blob.key);}if(entry?.data.status==='queued'){await runCampaign(blob.key);return;}}
   }
   async function publicRoute(request) {
     const url=new URL(request.url);
+    if(url.pathname==='/api/newsletter/brevo-webhook') {
+      if(request.method!=='POST')return reply({error:'Not allowed'},405);
+      const supplied=request.headers.get('authorization')||'',expected=`Bearer ${env.BREVO_WEBHOOK_SECRET||''}`;
+      if(!env.BREVO_WEBHOOK_SECRET||supplied.length!==expected.length||!timingSafeEqual(Buffer.from(supplied),Buffer.from(expected)))return reply({error:'Not allowed'},403);
+      const raw=await request.text();if(raw.length>100000)return reply({error:'Invalid event'},400);
+      let event;try{event=JSON.parse(raw);}catch{return reply({error:'Invalid event'},400);}
+      for(const item of Array.isArray(event)?event:[event]){
+        if(['unsubscribe','spam','hard_bounce','hardBounce'].includes(item?.event)&&emailValid(item.email))await suppress(item.email,'brevo-'+item.event);
+      }
+      return reply({received:true});
+    }
     if(url.pathname==='/api/newsletter/webhook') {
       if(request.method!=='POST')return reply({error:'Not allowed'},405);
       if(!env.NEWSLETTER_WEBHOOK_SECRET)return reply({error:'Unavailable'},503);
@@ -137,7 +165,7 @@ export function createMarketingService({ store, authorize, preview = false, env 
         await suppress(target.data.email,'unsubscribe');
         const entry=await readCollection('contacts');
         const next={items:entry.data.items.map(item=>item.email===target.data.email?{...item,subscription:'unsubscribed',updatedAt:new Date(now()).toISOString()}:item)};
-        if((await store.setJSON('contacts',next,{onlyIfMatch:entry.etag})).modified) return new Response('<!doctype html><meta name="viewport" content="width=device-width"><title>Unsubscribed</title><body style="background:#000;color:#fff;font-family:Arial;padding:40px"><h1>You’re unsubscribed.</h1><p>You will no longer receive our newsletters.</p></body>',{headers:{'Content-Type':'text/html','Cache-Control':'no-store'}});
+        if((await store.setJSON('contacts',next,{onlyIfMatch:entry.etag})).modified) { await queueBrevo(target.data.email); return new Response('<!doctype html><meta name="viewport" content="width=device-width"><title>Unsubscribed</title><body style="background:#000;color:#fff;font-family:Arial;padding:40px"><h1>You’re unsubscribed.</h1><p>You will no longer receive our newsletters.</p></body>',{headers:{'Content-Type':'text/html','Cache-Control':'no-store'}}); }
       }
       return reply({error:'Please try again.'},503);
     }
@@ -154,7 +182,8 @@ export function createMarketingService({ store, authorize, preview = false, env 
         const entry=await readCollection(collection);
         if(collection==='contacts'){
           const blocked=new Set((await store.list({prefix:'suppression/'})).blobs.map(blob=>blob.key));
-          return reply({items:entry.data.items.map(item=>({...item,suppressed:blocked.has(`suppression/${hash(item.email)}`)})),revision:entry.etag});
+          const pending=(await store.list({prefix:'brevo-sync/'})).blobs.length;
+          return reply({items:entry.data.items.map(item=>({...item,suppressed:blocked.has(`suppression/${hash(item.email)}`)})),revision:entry.etag,brevoConfigured,brevoPending:pending});
         }
         const {blobs}=await store.list({prefix:'campaigns/'}), campaigns=[];
         for(const blob of blobs.slice(-100)){const record=await get(blob.key);if(record){const job=record.data;campaigns.push({id:job.id,title:job.draft.title,status:job.status,createdAt:job.createdAt,total:job.recipients.length,accepted:job.recipients.filter(item=>item.status==='accepted').length,skipped:job.recipients.filter(item=>item.status==='skipped').length});}}
@@ -204,6 +233,16 @@ export function createMarketingService({ store, authorize, preview = false, env 
       } else return reply({error:'Invalid action.'},400);
       if(items.length>5000)return reply({error:'This collection has reached its initial limit of 5,000 records.'},400);
       if(!(await store.setJSON(collection,{items},{onlyIfMatch:entry.etag})).modified)return reply({error:'Another edit was saved. Refresh and try again.'},409);
+      if(collection==='contacts'){
+        for(const item of items){
+          const before=entry.data.items.find(previous=>previous.id===item.id);
+          if((item.subscription==='subscribed'||before?.subscription==='subscribed')&&(before?.subscription!==item.subscription||before?.email!==item.email)){
+            if(before?.email&&before.email!==item.email)await queueBrevo(before.email);
+            await queueBrevo(item.email);
+          }
+        }
+        for(const old of entry.data.items)if(old.subscription==='subscribed'&&!items.some(item=>item.id===old.id))await queueBrevo(old.email);
+      }
       return reply({saved:true});
     }catch(error){return reply({error:error.message?.includes('Storage')?'Storage is temporarily unavailable.':error.message||'Action failed.'},400);}
   }

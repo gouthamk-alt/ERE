@@ -77,7 +77,7 @@ app.all(['/api/admin/email/microsoft', '/api/admin/email/microsoft/connect', '/a
 });
 const media=createMediaHandler({store:createLocalEnquiryStore(path.join(root,'.ere-data','media')),authorize:async()=>null});
 const marketing=createMarketingService({store:createLocalEnquiryStore(path.join(root,'.ere-data','marketing')),authorize:async()=>null,preview:true});
-app.all(['/api/admin/media','/api/media/:id','/api/fonts.css','/api/admin/contacts','/api/admin/newsletters','/api/newsletter/unsubscribe','/api/newsletter/webhook'],async(req,res)=>{
+app.all(['/api/admin/media','/api/media/:id','/api/fonts.css','/api/admin/contacts','/api/admin/newsletters','/api/newsletter/unsubscribe','/api/newsletter/webhook','/api/newsletter/brevo-webhook'],async(req,res)=>{
   const request=new Request(`${req.protocol}://${req.get('host')}${req.originalUrl}`,{method:req.method,headers:Object.fromEntries(Object.entries(req.headers).filter(([key,value])=>typeof value==='string'&&key!=='content-length')),body:['GET','HEAD'].includes(req.method)?undefined:(req.rawBody||JSON.stringify(req.body))});
   const handler=req.path.includes('/media')||req.path==='/api/fonts.css'?media:marketing.handle;
   const response=await handler(request,{ip:req.ip});

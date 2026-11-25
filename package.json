@@ -10,7 +10,7 @@
     "prebuild": "node scripts/build-server-deps.mjs",
     "dev": "node server/index.mjs",
     "start": "node --env-file-if-exists=.env.production server/production.mjs",
-    "test": "node --test server/auth.test.mjs server/content.test.mjs server/content-backups.test.mjs server/presentation.test.mjs server/enquiries.test.mjs server/microsoft-email.test.mjs server/admin-features.test.mjs",
+    "test": "node --test server/auth.test.mjs server/content.test.mjs server/content-backups.test.mjs server/presentation.test.mjs server/enquiries.test.mjs server/microsoft-email.test.mjs server/admin-features.test.mjs server/brevo.test.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
