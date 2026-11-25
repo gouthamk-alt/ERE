@@ -71,7 +71,9 @@ export default function App() {
     return INITIAL_ENQUIRIES;
   });
 
-  const [activePage, setActivePage] = useState<ActivePage>('home');
+  const [activePage, setActivePage] = useState<ActivePage>(() =>
+    new URLSearchParams(window.location.search).get('page') === 'appraisal' ? 'list-with-us' : 'home'
+  );
   const [selectedTeamMemberId, setSelectedTeamMemberId] = useState<string | null>(null);
   usePageMotion(activePage, contentReady);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -115,6 +117,32 @@ export default function App() {
 
   // Property Detail Modal
   const [selectedProperty, setSelectedProperty] = useState<PropertyListing | null>(null);
+  const propertyLinkOpened = React.useRef(false);
+
+  useEffect(() => {
+    if (!contentReady || propertyLinkOpened.current) return;
+    const propertyId = new URLSearchParams(window.location.search).get('property');
+    if (!propertyId) return;
+    const property = listings.find((item) => item.id === propertyId);
+    if (!property) return;
+    propertyLinkOpened.current = true;
+    setActivePage('listings');
+    setSelectedProperty(property);
+  }, [contentReady, listings]);
+
+  useEffect(() => {
+    if (activePage !== 'list-with-us' || window.location.hash !== '#appraisal-form') return;
+    window.requestAnimationFrame(() => document.getElementById('appraisal-form')?.scrollIntoView());
+  }, [activePage]);
+
+  const closeProperty = () => {
+    setSelectedProperty(null);
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('property')) {
+      url.searchParams.delete('property');
+      window.history.replaceState(null, '', url);
+    }
+  };
 
   // Appraisal Form State
   const [appraisalForm, setAppraisalForm] = useState({
@@ -342,7 +370,7 @@ export default function App() {
         <PropertyDetailModal
           property={selectedProperty}
           agents={teamMembers}
-          onClose={() => setSelectedProperty(null)}
+          onClose={closeProperty}
           onSubmitEnquiry={handleAddEnquiry}
         />
       </></Suspense>}</AdminAccess>
@@ -1081,7 +1109,7 @@ export default function App() {
               </p>
             </div>
 
-            <div className="bg-[#202020] border border-[#c6c6c6]/50 p-8 sm:p-12">
+            <div id="appraisal-form" className="bg-[#202020] border border-[#c6c6c6]/50 p-8 sm:p-12 scroll-mt-24">
               <h2 className="font-cormorant text-3xl sm:text-4xl font-light text-white text-center">
                 Book an Appraisal
               </h2>
@@ -1680,7 +1708,7 @@ export default function App() {
       <PropertyDetailModal
         property={selectedProperty}
         agents={teamMembers}
-        onClose={() => setSelectedProperty(null)}
+        onClose={closeProperty}
         onSubmitEnquiry={handleAddEnquiry}
       />
     </div>
