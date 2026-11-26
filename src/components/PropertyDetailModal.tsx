@@ -1,4 +1,4 @@
-import { displayListingStatus, displayPropertyPrice, reaListingUrl, propertyImageVariant } from '../propertyPresentation';
+import { displayListingBadge, displayListingStatus, displayPropertyPrice, reaListingUrl, propertyImageVariant } from '../propertyPresentation';
 import React from 'react';
 import {
   X,
@@ -171,11 +171,9 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               <button type="button" className="gallery-control absolute right-4 top-1/2 -translate-y-1/2" aria-label="Next property photo" onClick={() => setImageIndex((index) => (index + 1) % gallery.length)}><ChevronRight className="w-5 h-5" /></button>
             </>}
 
-            {property.badgeText && (
-              <div className="absolute top-4 left-4 bg-black/85 text-white text-xs font-inter px-3 py-1 border border-white/20">
-                {property.badgeText}
-              </div>
-            )}
+            <div className="absolute top-4 left-4 bg-black/85 text-white text-xs font-inter px-3 py-1 border border-white/20">
+              {displayListingBadge(property)}
+            </div>
 
             </div>
 
