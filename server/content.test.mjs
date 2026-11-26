@@ -39,6 +39,11 @@ test('all existing listings and articles pass the publication schema', () => {
   for (const collection of ['listings', 'blogPosts']) for (const item of initialContent[collection]) validateItem(collection, item);
 });
 
+test('under contract is a valid editable listing status', () => {
+  const property = initialContent.listings[0];
+  assert.equal(validateItem('listings', { ...property, status: 'Under Contract' }).status, 'Under Contract');
+});
+
 test('optional REA listing links persist while unsafe or unrelated URLs are rejected', () => {
   const property = initialContent.listings[0];
   const reaUrl = 'https://www.realestate.com.au/property-house-wa-applecross-123456789';

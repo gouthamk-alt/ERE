@@ -1,6 +1,6 @@
 export type ListingCategory = 'Residential Sale' | 'Residential Lease' | 'Commercial' | 'Sold' | 'Leased';
 
-export type ListingStatus = 'Available' | 'Under Offer' | 'Sold' | 'Leased' | 'Off-Market';
+export type ListingStatus = 'Available' | 'Under Offer' | 'Under Contract' | 'Sold' | 'Leased' | 'Off-Market';
 
 export interface PropertyListing {
   id: string;

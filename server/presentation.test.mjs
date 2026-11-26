@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { displayPropertyPrice } from '../src/propertyPresentation.ts';
+import { displayListingBadge, displayListingStatus, displayPropertyPrice } from '../src/propertyPresentation.ts';
 import { testimonialStart } from '../src/testimonials.ts';
 
 test('public sections start with distinct testimonials when enough reviews exist', () => {
@@ -33,4 +33,11 @@ test('formatting is display-only and does not alter stored listing data', () => 
   const listing = Object.freeze({ category: 'Residential Lease', priceDisplay: '$1550' });
   assert.equal(displayPropertyPrice(listing), '$1,550 per week');
   assert.equal(listing.priceDisplay, '$1550');
+});
+
+test('under contract appears on listing cards and preserves earlier contract labels', () => {
+  assert.equal(displayListingBadge({ status: 'Under Contract', badgeText: 'Just Listed', category: 'Residential Sale' }), 'Under Contract');
+  assert.equal(displayListingStatus({ status: 'Under Contract', badgeText: 'Just Listed' }), 'Under Contract');
+  assert.equal(displayListingBadge({ status: 'Under Offer', badgeText: 'Under Contract', category: 'Residential Sale' }), 'Under Contract');
+  assert.equal(displayListingBadge({ status: 'Available', badgeText: 'Just Listed', category: 'Residential Sale' }), 'Just Listed');
 });

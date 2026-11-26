@@ -37,7 +37,7 @@ const listings = source.map(d => {
   const commercial = sourceCategory === 'Commercial';
   const rental = /lease/i.test(method) && !/sale or lease/i.test(method);
   const rawStatus = s.match(/- text: (On Market|Under Offer|Under Contract|Sold|Settled|Leased|Lease Pending|Pre-Sold)\n/)?.[1] || '';
-  const status = d.group === 'sold' ? 'Sold' : d.group === 'leased' ? 'Leased' : /Under Offer|Under Contract|Pre-Sold|Lease Pending/.test(rawStatus) || /UNDER OFFER/i.test(p.price) ? 'Under Offer' : 'Available';
+  const status = d.group === 'sold' ? 'Sold' : d.group === 'leased' ? 'Leased' : rawStatus === 'Under Contract' ? 'Under Contract' : /Under Offer|Pre-Sold|Lease Pending/.test(rawStatus) || /UNDER OFFER/i.test(p.price) ? 'Under Offer' : 'Available';
   const category = status === 'Sold' ? 'Sold' : status === 'Leased' ? 'Leased' : commercial ? 'Commercial' : rental ? 'Residential Lease' : 'Residential Sale';
   const priceLinks = linksFor(s, '/modalForm/price');
   const rentalIndex = priceLinks.indexOf('Rental');
@@ -77,7 +77,7 @@ const listings = source.map(d => {
   const reaUrl = [...d.reaLinks.map(l=>l.url),...(p.reaLinks||[])].find(url=>/^https:\/\/(www\.)?realestate\.com\.au\/(?:property-[^/]+-)?\d+\/?$/.test(url));
   const features = description.split('\n').map(x=>x.trim()).filter(x=>/^[*•-]\s+/.test(x)).map(x=>x.replace(/^[*•-]\s+/,''));
   const listedDate = date(s.match(/- generic: On Market Date\n- generic: ([^\n]+)/)?.[1] || types.find(x=>/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun),/.test(x)));
-  const item = { id:d.id,title,address:`${title}, ${suburb} WA ${postcode}`.trim(),suburb,state:'WA',postcode,priceDisplay,numericPrice:0,category,status,propertyType,bedrooms,bathrooms,carSpaces,landSizeSqm,buildingAreaSqm,imageUrl:galleryUrls[0],galleryUrls,agentId,featured:false,inspectionTime:'',headline:p.headline||title,description,features,listedDate,...(coAgentId?{coAgentId}:{}),...(reaUrl?{reaUrl}:{}),badgeText:status === 'Sold' || status === 'Leased' ? status : status === 'Under Offer' ? rawStatus==='Lease Pending'?'Lease Pending':rawStatus==='Under Contract'?'Under Contract':'Under Offer':/ON HOLD/i.test(priceDisplay)?'On Hold':commercial?'Commercial':rental?'For Lease':'For Sale'};
+  const item = { id:d.id,title,address:`${title}, ${suburb} WA ${postcode}`.trim(),suburb,state:'WA',postcode,priceDisplay,numericPrice:0,category,status,propertyType,bedrooms,bathrooms,carSpaces,landSizeSqm,buildingAreaSqm,imageUrl:galleryUrls[0],galleryUrls,agentId,featured:false,inspectionTime:'',headline:p.headline||title,description,features,listedDate,...(coAgentId?{coAgentId}:{}),...(reaUrl?{reaUrl}:{}),badgeText:status === 'Sold' || status === 'Leased' || status === 'Under Contract' ? status : status === 'Under Offer' ? rawStatus==='Lease Pending'?'Lease Pending':'Under Offer':/ON HOLD/i.test(priceDisplay)?'On Hold':commercial?'Commercial':rental?'For Lease':'For Sale'};
   return validateItem('listings',item);
 });
 

@@ -122,7 +122,7 @@ export function validateItem(collection, value) {
     }
     for (const [key, allowed] of Object.entries({
       category: ['Residential Sale', 'Residential Lease', 'Commercial', 'Sold', 'Leased'],
-      status: ['Available', 'Under Offer', 'Sold', 'Leased', 'Off-Market'],
+      status: ['Available', 'Under Offer', 'Under Contract', 'Sold', 'Leased', 'Off-Market'],
       propertyType: ['House', 'Apartment / Penthouse', 'Townhouse', 'Commercial Suite', 'Development Land', 'Apartment', 'Unit', 'Vacant Land', 'Industrial/Warehouse', 'Mixed Farming', 'Viticulture', 'Commercial Farming', 'Retail', 'Residential', 'Villa - Exclusive', 'Offices', 'Showrooms/Bulky Goods', 'Duplex Semi-detached'],
     })) {
       if (!allowed.includes(value[key])) throw new Error(`Check the ${key} field.`);

@@ -12,6 +12,18 @@ export function reaListingUrl(value?: string) {
   } catch { return null; }
 }
 
+export function displayListingStatus(property: Pick<PropertyListing, 'status' | 'badgeText'>) {
+  // Earlier imports labelled contracts in the badge while storing Under Offer.
+  if (property.status === 'Under Offer' && ['Under Contract', 'Lease Pending'].includes(property.badgeText || '')) {
+    return property.badgeText;
+  }
+  return property.status;
+}
+
+export function displayListingBadge(property: Pick<PropertyListing, 'status' | 'badgeText' | 'category'>) {
+  return property.status === 'Available' ? property.badgeText || property.category : displayListingStatus(property);
+}
+
 export function displayPropertyPrice(property: Pick<PropertyListing, 'category' | 'priceDisplay'>) {
   const price = property.priceDisplay.trim();
   if (!['Residential Lease', 'Leased'].includes(property.category)) return price;

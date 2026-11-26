@@ -1,4 +1,4 @@
-import { displayPropertyPrice, propertyImageVariant } from '../propertyPresentation';
+import { displayListingBadge, displayPropertyPrice, propertyImageVariant } from '../propertyPresentation';
 import { Bath, Bed, Car } from 'lucide-react';
 import { PropertyListing } from '../data/initialData';
 import { PropertyImage } from './PropertyImage';
@@ -13,7 +13,7 @@ export function PropertyCard({ property, agentName, onSelect }: {
       <button type="button" className="property-card-link" onClick={() => onSelect(property)} aria-label={`View ${property.title}, ${property.suburb}`}>
         <div className="property-card-image">
           <PropertyImage src={propertyImageVariant(property.imageUrl, 'card')} alt={property.title} className="w-full h-full object-cover" />
-          <span className="property-card-badge">{property.badgeText || property.category}</span>
+          <span className="property-card-badge">{displayListingBadge(property)}</span>
         </div>
         <div className="property-card-body">
           <p className="property-card-suburb">{property.suburb}, {property.state} {property.postcode}</p>

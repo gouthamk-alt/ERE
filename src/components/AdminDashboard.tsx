@@ -24,6 +24,7 @@ import {
   BRAND_ASSETS,
 } from '../data/initialData';
 import { PropertyImage } from './PropertyImage';
+import { displayListingBadge } from '../propertyPresentation';
 import { MicrosoftEmailSettings } from './MicrosoftEmailSettings';
 import { TeamAdmin } from './TeamAdmin';
 import { RichTextEditor, paragraphsHtml } from './RichTextEditor';
@@ -265,7 +266,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     let updatedCategory: ListingCategory = prop.category;
     if (newStatus === 'Sold') updatedCategory = 'Sold';
     if (newStatus === 'Leased') updatedCategory = 'Leased';
-    if (newStatus === 'Available' && prop.category === 'Sold') updatedCategory = 'Residential Sale';
+    if (['Available', 'Under Offer', 'Under Contract'].includes(newStatus)) {
+      if (prop.category === 'Sold') updatedCategory = 'Residential Sale';
+      if (prop.category === 'Leased') updatedCategory = 'Residential Lease';
+    }
 
     if (!await onUpdateListing({
       ...prop,
@@ -684,6 +688,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               >
                                 <option value="Available">Available</option>
                                 <option value="Under Offer">Under Offer</option>
+                                <option value="Under Contract">Under Contract</option>
                                 <option value="Sold">Sold</option>
                                 <option value="Leased">Leased</option>
                                 <option value="Off-Market">Off-Market</option>
@@ -694,7 +699,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             {prop.priceDisplay}
                           </td>
                           <td className="py-3.5 px-4 text-white/80 whitespace-nowrap">
-                            {prop.badgeText || '—'}
+                            {displayListingBadge(prop)}
                           </td>
                           <td className="py-3.5 px-4 text-white/80 whitespace-nowrap">
                             {agent ? agent.name : 'Wendy Chia'}
@@ -879,12 +884,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </label>
                     <select
                       value={listingForm.category}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const category = e.target.value as ListingCategory;
                         setListingForm({
                           ...listingForm,
-                          category: e.target.value as ListingCategory,
-                        })
-                      }
+                          category,
+                          status: category === 'Sold' || category === 'Leased'
+                            ? category
+                            : listingForm.status === 'Sold' || listingForm.status === 'Leased'
+                              ? 'Available'
+                              : listingForm.status,
+                        });
+                      }}
                       className="zenu-input w-full"
                     >
                       <option value="Residential Sale">Residential Sale</option>
@@ -892,6 +903,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <option value="Commercial">Commercial</option>
                       <option value="Sold">Sold</option>
                       <option value="Leased">Leased</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-black mb-1">
+                      Status
+                    </label>
+                    <select
+                      value={listingForm.status}
+                      onChange={(e) => {
+                        const status = e.target.value as ListingStatus;
+                        const category = status === 'Sold' || status === 'Leased'
+                          ? status
+                          : listingForm.category === 'Sold'
+                            ? 'Residential Sale'
+                            : listingForm.category === 'Leased'
+                              ? 'Residential Lease'
+                              : listingForm.category;
+                        setListingForm({ ...listingForm, status, category });
+                      }}
+                      className="zenu-input w-full"
+                    >
+                      <option value="Available">Available</option>
+                      <option value="Under Offer">Under Offer</option>
+                      <option value="Under Contract">Under Contract</option>
+                      <option value="Sold">Sold</option>
+                      <option value="Leased">Leased</option>
+                      <option value="Off-Market">Off-Market</option>
                     </select>
                   </div>
                 </div>

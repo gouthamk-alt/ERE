@@ -1,4 +1,4 @@
-import { displayPropertyPrice, reaListingUrl, propertyImageVariant } from '../propertyPresentation';
+import { displayListingStatus, displayPropertyPrice, reaListingUrl, propertyImageVariant } from '../propertyPresentation';
 import React from 'react';
 import {
   X,
@@ -136,7 +136,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
         <div className="flex items-center justify-between px-6 py-4 bg-[#000000] border-b border-[#302f2f] shrink-0">
           <div className="flex items-center gap-3 text-xs text-white/70 font-inter">
             <span className="text-white font-medium">{property.category}</span>
-            <span>{property.status}</span>
+            <span>{displayListingStatus(property)}</span>
             <span>{property.propertyType}</span>
             <span className="tabular-nums">Listing #{property.id}</span>
           </div>
